@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Activity, Bell, Search } from "lucide-react";
 
-const tabs = ["Feed", "Proposals", "Agents", "Memory", "Analytics"];
+const tabs = [
+  { label: "Feed", to: "/" as const, exact: true },
+  { label: "Proposals", to: "/proposals" as const, exact: false },
+  { label: "Agents", to: "/agents" as const, exact: false },
+  { label: "Memory", to: "/memory" as const, exact: false },
+  { label: "Analytics", to: "/analytics" as const, exact: false },
+];
 
 export function TopNav() {
-  const [active, setActive] = useState("Feed");
   return (
     <header className="sticky top-0 z-40 border-b hairline backdrop-blur-xl bg-[color-mix(in_oklab,var(--background)_75%,transparent)]">
       <div className="flex h-14 items-center gap-6 px-6">
@@ -19,20 +24,17 @@ export function TopNav() {
           </div>
         </div>
 
-        <nav className="ml-4 flex items-center gap-1">
+        <nav className="ml-4 hidden md:flex items-center gap-1">
           {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActive(t)}
-              className={`relative px-3 py-1.5 text-[13px] tracking-wide transition-colors ${
-                active === t ? "text-foreground" : "text-muted-foreground hover:text-foreground/80"
-              }`}
+            <Link
+              key={t.to}
+              to={t.to}
+              activeOptions={{ exact: t.exact }}
+              className="relative px-3 py-1.5 text-[13px] tracking-wide transition-colors text-muted-foreground hover:text-foreground/80 data-[status=active]:text-foreground group"
             >
-              {t}
-              {active === t && (
-                <span className="absolute -bottom-[15px] left-2 right-2 h-px bg-amber" />
-              )}
-            </button>
+              {t.label}
+              <span className="absolute -bottom-[15px] left-2 right-2 h-px bg-amber opacity-0 group-data-[status=active]:opacity-100" />
+            </Link>
           ))}
         </nav>
 
