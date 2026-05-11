@@ -32,26 +32,28 @@ export function MemoryTimeline() {
           {memories.map((m, i) => (
             <article key={m.id} className="relative">
               <Link to="/memory/$slug" params={{ slug: m.slug }} className="block group">
-                <span className="font-mono text-[10px] text-muted-foreground">{m.cycle}</span>
-                <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
-                  {m.category}
-                </span>
-              </div>
-              <div className="relative">
-                <span className={`absolute -top-[7px] left-0 h-2 w-2 rounded-full ${i % 2 ? "bg-cyan" : "bg-amber"}`} />
-                <div className="panel rounded-md p-3.5 mt-1">
-                  <h3 className="font-serif text-[14px] leading-snug">{m.title}</h3>
-                  <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{m.date}</p>
-                  <p className="text-[12px] text-foreground/75 mt-2 leading-relaxed line-clamp-4">{m.summary}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Salience</span>
-                    <span className="font-mono text-[10px] text-amber">{m.weight}</span>
-                  </div>
-                  <div className="mt-1 h-0.5 w-full bg-foreground/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber" style={{ width: `${m.weight}%` }} />
+                <div className="flex items-center gap-2 h-[42px]">
+                  <span className="font-mono text-[10px] text-muted-foreground">{m.cycle}</span>
+                  <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
+                    {m.category}
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className={`absolute -top-[7px] left-0 h-2 w-2 rounded-full ${i % 2 ? "bg-cyan" : "bg-amber"}`} />
+                  <div className="panel rounded-md p-3.5 mt-1 group-hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors">
+                    <h3 className="font-serif text-[14px] leading-snug">{m.title}</h3>
+                    <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{m.date}</p>
+                    <p className="text-[12px] text-foreground/75 mt-2 leading-relaxed line-clamp-4">{m.summary}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Salience</span>
+                      <span className="font-mono text-[10px] text-amber">{m.weight}</span>
+                    </div>
+                    <div className="mt-1 h-0.5 w-full bg-foreground/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber" style={{ width: `${m.weight}%` }} />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             </article>
           ))}
         </div>
