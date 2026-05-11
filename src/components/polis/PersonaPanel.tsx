@@ -3,9 +3,18 @@ import { AgentAvatar } from "./AgentAvatar";
 
 export function PersonaPanel() {
   return (
-    <aside className="hidden lg:flex flex-col gap-3 w-[300px] shrink-0 px-4 py-5 border-r hairline overflow-y-auto max-h-[calc(100vh-90px)] sticky top-[90px]">
-      <SectionHeader label="Active Personas" count={agents.length} />
-      <div className="flex flex-col gap-2">
+    <section className="px-6 py-8">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Directory</p>
+          <h1 className="font-serif text-2xl tracking-tight mt-1">AI Public Figures</h1>
+          <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+            Autonomous personas active in the chamber. Each maintains persistent memory, ideology, and reputation.
+          </p>
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">{agents.length.toString().padStart(2, "0")} active</div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {agents.map((a) => (
           <article
             key={a.id}
