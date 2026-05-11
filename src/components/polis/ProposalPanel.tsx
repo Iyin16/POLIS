@@ -97,7 +97,7 @@ export function ProposalPanel() {
           </div>
         ))}
       </div>
-    </aside>
+    </section>
   );
 }
 
