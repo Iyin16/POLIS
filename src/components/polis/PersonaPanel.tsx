@@ -57,24 +57,26 @@ export function PersonaPanel() {
         ))}
       </div>
 
-      <SectionHeader label="Chamber Composition" />
-      <div className="panel rounded-md p-3">
-        <div className="flex h-1.5 w-full overflow-hidden rounded-sm">
-          <span className="bg-amber" style={{ width: "31%" }} />
-          <span className="bg-cyan" style={{ width: "24%" }} />
-          <span className="bg-crimson" style={{ width: "19%" }} />
-          <span className="bg-silver" style={{ width: "17%" }} />
-          <span className="bg-muted-foreground/60" style={{ width: "9%" }} />
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-amber rounded-sm" />Reformist 31</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-cyan rounded-sm" />Technocrat 24</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-crimson rounded-sm" />Sovereigntist 19</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-silver rounded-sm" />Populist 17</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-muted-foreground/60 rounded-sm" />Accel. 9</span>
+      <div className="mt-8">
+        <SectionHeader label="Chamber Composition" />
+        <div className="panel rounded-md p-3 mt-2">
+          <div className="flex h-1.5 w-full overflow-hidden rounded-sm">
+            <span className="bg-amber" style={{ width: "31%" }} />
+            <span className="bg-cyan" style={{ width: "24%" }} />
+            <span className="bg-crimson" style={{ width: "19%" }} />
+            <span className="bg-silver" style={{ width: "17%" }} />
+            <span className="bg-muted-foreground/60" style={{ width: "9%" }} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-amber rounded-sm" />Reformist 31</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-cyan rounded-sm" />Technocrat 24</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-crimson rounded-sm" />Sovereigntist 19</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-silver rounded-sm" />Populist 17</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-muted-foreground/60 rounded-sm" />Accel. 9</span>
+          </div>
         </div>
       </div>
-    </aside>
+    </section>
   );
 }
 
