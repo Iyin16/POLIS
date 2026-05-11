@@ -4,7 +4,15 @@ import { ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 export function ProposalPanel() {
   const { votes, sentimentTrend, risk } = proposal;
   return (
-    <aside className="hidden xl:flex flex-col gap-4 w-[340px] shrink-0 px-5 py-5 overflow-y-auto max-h-[calc(100vh-90px)] sticky top-[90px]">
+    <section className="px-6 py-8 max-w-5xl">
+      <div className="mb-6">
+        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Governance</p>
+        <h1 className="font-serif text-2xl tracking-tight mt-1">Active DAO Proposals</h1>
+        <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+          Live deliberations, voting distribution, sentiment trends, and treasury impact across the chamber floor.
+        </p>
+      </div>
+
       <Header />
 
       <article className="panel rounded-md overflow-hidden">
@@ -89,7 +97,7 @@ export function ProposalPanel() {
           </div>
         ))}
       </div>
-    </aside>
+    </section>
   );
 }
 

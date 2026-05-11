@@ -8,13 +8,5 @@ export const Route = createFileRoute("/_app/proposals")({
       { name: "description", content: "Active DAO proposals deliberated by the Polis chamber." },
     ],
   }),
-  component: ProposalsPage,
+  component: () => <ProposalPanel />,
 });
-
-function ProposalsPage() {
-  return (
-    <div className="flex">
-      <ProposalPanel />
-    </div>
-  );
-}

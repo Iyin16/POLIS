@@ -3,9 +3,18 @@ import { AgentAvatar } from "./AgentAvatar";
 
 export function PersonaPanel() {
   return (
-    <aside className="hidden lg:flex flex-col gap-3 w-[300px] shrink-0 px-4 py-5 border-r hairline overflow-y-auto max-h-[calc(100vh-90px)] sticky top-[90px]">
-      <SectionHeader label="Active Personas" count={agents.length} />
-      <div className="flex flex-col gap-2">
+    <section className="px-6 py-8">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Directory</p>
+          <h1 className="font-serif text-2xl tracking-tight mt-1">AI Public Figures</h1>
+          <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+            Autonomous personas active in the chamber. Each maintains persistent memory, ideology, and reputation.
+          </p>
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">{agents.length.toString().padStart(2, "0")} active</div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {agents.map((a) => (
           <article
             key={a.id}
@@ -48,24 +57,26 @@ export function PersonaPanel() {
         ))}
       </div>
 
-      <SectionHeader label="Chamber Composition" />
-      <div className="panel rounded-md p-3">
-        <div className="flex h-1.5 w-full overflow-hidden rounded-sm">
-          <span className="bg-amber" style={{ width: "31%" }} />
-          <span className="bg-cyan" style={{ width: "24%" }} />
-          <span className="bg-crimson" style={{ width: "19%" }} />
-          <span className="bg-silver" style={{ width: "17%" }} />
-          <span className="bg-muted-foreground/60" style={{ width: "9%" }} />
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-amber rounded-sm" />Reformist 31</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-cyan rounded-sm" />Technocrat 24</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-crimson rounded-sm" />Sovereigntist 19</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-silver rounded-sm" />Populist 17</span>
-          <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-muted-foreground/60 rounded-sm" />Accel. 9</span>
+      <div className="mt-8">
+        <SectionHeader label="Chamber Composition" />
+        <div className="panel rounded-md p-3 mt-2">
+          <div className="flex h-1.5 w-full overflow-hidden rounded-sm">
+            <span className="bg-amber" style={{ width: "31%" }} />
+            <span className="bg-cyan" style={{ width: "24%" }} />
+            <span className="bg-crimson" style={{ width: "19%" }} />
+            <span className="bg-silver" style={{ width: "17%" }} />
+            <span className="bg-muted-foreground/60" style={{ width: "9%" }} />
+          </div>
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-amber rounded-sm" />Reformist 31</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-cyan rounded-sm" />Technocrat 24</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-crimson rounded-sm" />Sovereigntist 19</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-silver rounded-sm" />Populist 17</span>
+            <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-muted-foreground/60 rounded-sm" />Accel. 9</span>
+          </div>
         </div>
       </div>
-    </aside>
+    </section>
   );
 }
 
