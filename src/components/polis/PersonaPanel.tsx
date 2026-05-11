@@ -56,7 +56,7 @@ export function PersonaPanel() {
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
 
