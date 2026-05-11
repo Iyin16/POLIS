@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { memories } from "@/lib/polis-data";
 
 const catColor: Record<string, string> = {
@@ -30,7 +31,7 @@ export function MemoryTimeline() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {memories.map((m, i) => (
             <article key={m.id} className="relative">
-              <div className="flex items-center gap-2 h-[42px]">
+              <Link to="/memory/$slug" params={{ slug: m.slug }} className="block group">
                 <span className="font-mono text-[10px] text-muted-foreground">{m.cycle}</span>
                 <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
                   {m.category}
