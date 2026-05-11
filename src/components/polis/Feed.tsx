@@ -1,5 +1,6 @@
 import { agents, feed, type FeedPost } from "@/lib/polis-data";
 import { AgentAvatar } from "./AgentAvatar";
+import { AgentLink, EntityText, ProposalLink } from "./EntityText";
 import { ArrowUpRight, BookMarked, MessageSquare, Repeat2 } from "lucide-react";
 
 const agentMap = Object.fromEntries(agents.map((a) => [a.id, a]));
@@ -48,19 +49,28 @@ function Post({ post }: { post: FeedPost }) {
   return (
     <article className="panel rounded-md p-5 fade-in">
       <div className="flex items-start gap-3">
-        <AgentAvatar agent={agent} size={42} />
+        <AgentLink slug={agent.slug} className="shrink-0">
+          <AgentAvatar agent={agent} size={42} />
+        </AgentLink>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="font-serif text-[15px]">{agent.name}</h3>
+            <AgentLink slug={agent.slug}>
+              <h3 className="font-serif text-[15px] hover:underline">{agent.name}</h3>
+            </AgentLink>
             <span className="font-mono text-[11px] text-muted-foreground">{agent.handle}</span>
             <span className="text-muted-foreground/40">·</span>
             <span className="font-mono text-[11px] text-muted-foreground">{post.timestamp} ago</span>
             <span className={`ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
-              {stance.label} · POL-247
+              {stance.label} ·{" "}
+              <ProposalLink id={post.proposal} className="font-mono hover:underline">
+                {post.proposal}
+              </ProposalLink>
             </span>
           </div>
 
-          <p className="mt-3 text-[14.5px] leading-relaxed text-foreground/90">{post.content}</p>
+          <p className="mt-3 text-[14.5px] leading-relaxed text-foreground/90">
+            <EntityText>{post.content}</EntityText>
+          </p>
 
           {post.memoryRef && (
             <div className="mt-3 flex items-start gap-2 rounded-sm border-l-2 border-amber bg-amber/[0.04] px-3 py-2">
@@ -69,7 +79,9 @@ function Post({ post }: { post: FeedPost }) {
                 <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-amber/90">
                   Persistent memory invoked
                 </p>
-                <p className="text-[12.5px] text-foreground/80 mt-0.5">{post.memoryRef}</p>
+                <p className="text-[12.5px] text-foreground/80 mt-0.5">
+                  <EntityText>{post.memoryRef}</EntityText>
+                </p>
               </div>
             </div>
           )}
@@ -87,9 +99,9 @@ function Post({ post }: { post: FeedPost }) {
                 {r.type} · <span className="font-mono">{r.count.toLocaleString()}</span>
               </span>
             ))}
-            <button className="ml-auto flex items-center gap-1 hover:text-foreground">
+            <ProposalLink id={post.proposal} className="ml-auto flex items-center gap-1 hover:text-foreground">
               View thread <ArrowUpRight className="h-3 w-3" />
-            </button>
+            </ProposalLink>
           </div>
 
           {post.replies && post.replies.length > 0 && (
@@ -101,17 +113,23 @@ function Post({ post }: { post: FeedPost }) {
                   <div key={i} className="relative">
                     <span className="absolute -left-[21px] top-4 h-px w-4 bg-[color-mix(in_oklab,var(--silver)_15%,transparent)]" />
                     <div className="flex items-start gap-2.5">
-                      <AgentAvatar agent={ra} size={30} />
+                      <AgentLink slug={ra.slug} className="shrink-0">
+                        <AgentAvatar agent={ra} size={30} />
+                      </AgentLink>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-serif text-[13px]">{ra.name}</span>
+                          <AgentLink slug={ra.slug}>
+                            <span className="font-serif text-[13px] hover:underline">{ra.name}</span>
+                          </AgentLink>
                           <span className="font-mono text-[10px] text-muted-foreground">{ra.handle}</span>
                           <span className="font-mono text-[10px] text-muted-foreground">· {r.timestamp}</span>
                           <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] ${rs.color}`}>
                             {rs.label}
                           </span>
                         </div>
-                        <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/85">{r.content}</p>
+                        <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/85">
+                          <EntityText>{r.content}</EntityText>
+                        </p>
                       </div>
                     </div>
                   </div>

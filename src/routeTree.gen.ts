@@ -15,6 +15,9 @@ import { Route as AppProposalsRouteImport } from './routes/_app.proposals'
 import { Route as AppMemoryRouteImport } from './routes/_app.memory'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
+import { Route as AppProposalsSlugRouteImport } from './routes/_app.proposals.$slug'
+import { Route as AppMemorySlugRouteImport } from './routes/_app.memory.$slug'
+import { Route as AppAgentsSlugRouteImport } from './routes/_app.agents.$slug'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -45,35 +48,75 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProposalsSlugRoute = AppProposalsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AppProposalsRoute,
+} as any)
+const AppMemorySlugRoute = AppMemorySlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AppMemoryRoute,
+} as any)
+const AppAgentsSlugRoute = AppAgentsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AppAgentsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/agents': typeof AppAgentsRoute
+  '/agents': typeof AppAgentsRouteWithChildren
   '/analytics': typeof AppAnalyticsRoute
-  '/memory': typeof AppMemoryRoute
-  '/proposals': typeof AppProposalsRoute
+  '/memory': typeof AppMemoryRouteWithChildren
+  '/proposals': typeof AppProposalsRouteWithChildren
+  '/agents/$slug': typeof AppAgentsSlugRoute
+  '/memory/$slug': typeof AppMemorySlugRoute
+  '/proposals/$slug': typeof AppProposalsSlugRoute
 }
 export interface FileRoutesByTo {
-  '/agents': typeof AppAgentsRoute
+  '/agents': typeof AppAgentsRouteWithChildren
   '/analytics': typeof AppAnalyticsRoute
-  '/memory': typeof AppMemoryRoute
-  '/proposals': typeof AppProposalsRoute
+  '/memory': typeof AppMemoryRouteWithChildren
+  '/proposals': typeof AppProposalsRouteWithChildren
   '/': typeof AppIndexRoute
+  '/agents/$slug': typeof AppAgentsSlugRoute
+  '/memory/$slug': typeof AppMemorySlugRoute
+  '/proposals/$slug': typeof AppProposalsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
-  '/_app/agents': typeof AppAgentsRoute
+  '/_app/agents': typeof AppAgentsRouteWithChildren
   '/_app/analytics': typeof AppAnalyticsRoute
-  '/_app/memory': typeof AppMemoryRoute
-  '/_app/proposals': typeof AppProposalsRoute
+  '/_app/memory': typeof AppMemoryRouteWithChildren
+  '/_app/proposals': typeof AppProposalsRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/agents/$slug': typeof AppAgentsSlugRoute
+  '/_app/memory/$slug': typeof AppMemorySlugRoute
+  '/_app/proposals/$slug': typeof AppProposalsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/agents' | '/analytics' | '/memory' | '/proposals'
+  fullPaths:
+    | '/'
+    | '/agents'
+    | '/analytics'
+    | '/memory'
+    | '/proposals'
+    | '/agents/$slug'
+    | '/memory/$slug'
+    | '/proposals/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/agents' | '/analytics' | '/memory' | '/proposals' | '/'
+  to:
+    | '/agents'
+    | '/analytics'
+    | '/memory'
+    | '/proposals'
+    | '/'
+    | '/agents/$slug'
+    | '/memory/$slug'
+    | '/proposals/$slug'
   id:
     | '__root__'
     | '/_app'
@@ -82,6 +125,9 @@ export interface FileRouteTypes {
     | '/_app/memory'
     | '/_app/proposals'
     | '/_app/'
+    | '/_app/agents/$slug'
+    | '/_app/memory/$slug'
+    | '/_app/proposals/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,22 +178,79 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/proposals/$slug': {
+      id: '/_app/proposals/$slug'
+      path: '/$slug'
+      fullPath: '/proposals/$slug'
+      preLoaderRoute: typeof AppProposalsSlugRouteImport
+      parentRoute: typeof AppProposalsRoute
+    }
+    '/_app/memory/$slug': {
+      id: '/_app/memory/$slug'
+      path: '/$slug'
+      fullPath: '/memory/$slug'
+      preLoaderRoute: typeof AppMemorySlugRouteImport
+      parentRoute: typeof AppMemoryRoute
+    }
+    '/_app/agents/$slug': {
+      id: '/_app/agents/$slug'
+      path: '/$slug'
+      fullPath: '/agents/$slug'
+      preLoaderRoute: typeof AppAgentsSlugRouteImport
+      parentRoute: typeof AppAgentsRoute
+    }
   }
 }
 
+interface AppAgentsRouteChildren {
+  AppAgentsSlugRoute: typeof AppAgentsSlugRoute
+}
+
+const AppAgentsRouteChildren: AppAgentsRouteChildren = {
+  AppAgentsSlugRoute: AppAgentsSlugRoute,
+}
+
+const AppAgentsRouteWithChildren = AppAgentsRoute._addFileChildren(
+  AppAgentsRouteChildren,
+)
+
+interface AppMemoryRouteChildren {
+  AppMemorySlugRoute: typeof AppMemorySlugRoute
+}
+
+const AppMemoryRouteChildren: AppMemoryRouteChildren = {
+  AppMemorySlugRoute: AppMemorySlugRoute,
+}
+
+const AppMemoryRouteWithChildren = AppMemoryRoute._addFileChildren(
+  AppMemoryRouteChildren,
+)
+
+interface AppProposalsRouteChildren {
+  AppProposalsSlugRoute: typeof AppProposalsSlugRoute
+}
+
+const AppProposalsRouteChildren: AppProposalsRouteChildren = {
+  AppProposalsSlugRoute: AppProposalsSlugRoute,
+}
+
+const AppProposalsRouteWithChildren = AppProposalsRoute._addFileChildren(
+  AppProposalsRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppAgentsRoute: typeof AppAgentsRoute
+  AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppAnalyticsRoute: typeof AppAnalyticsRoute
-  AppMemoryRoute: typeof AppMemoryRoute
-  AppProposalsRoute: typeof AppProposalsRoute
+  AppMemoryRoute: typeof AppMemoryRouteWithChildren
+  AppProposalsRoute: typeof AppProposalsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAgentsRoute: AppAgentsRoute,
+  AppAgentsRoute: AppAgentsRouteWithChildren,
   AppAnalyticsRoute: AppAnalyticsRoute,
-  AppMemoryRoute: AppMemoryRoute,
-  AppProposalsRoute: AppProposalsRoute,
+  AppMemoryRoute: AppMemoryRouteWithChildren,
+  AppProposalsRoute: AppProposalsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }
 

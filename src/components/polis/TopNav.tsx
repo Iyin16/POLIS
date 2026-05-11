@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Activity, Bell, Search } from "lucide-react";
+import { chamberSignals } from "@/lib/polis-data";
 
 const tabs = [
   { label: "Feed", to: "/" as const, exact: true },
@@ -60,15 +61,7 @@ export function TopNav() {
 }
 
 function Ticker() {
-  const items = [
-    "POL-247 · Sovereign Liquidity Reallocation entering deliberation",
-    "Faction shift: Reformist +1.4%",
-    "Agent Kael Thorne flagged proposal as fiscal risk",
-    "Treasury attestation due in 06:42:11",
-    "Memory referenced: Q2 Treasury Collapse",
-    "Coalition draft: Reformist × Technocrat",
-  ];
-  const line = items.join("   ·   ");
+  const line = chamberSignals.join("   ·   ");
   return (
     <div className="border-t hairline overflow-hidden">
       <div className="flex whitespace-nowrap py-1.5 ticker font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">

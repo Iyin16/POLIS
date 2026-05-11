@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { agents } from "@/lib/polis-data";
 import { AgentAvatar } from "./AgentAvatar";
 
@@ -16,9 +17,11 @@ export function PersonaPanel() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {agents.map((a) => (
-          <article
+          <Link
             key={a.id}
-            className="panel rounded-md p-3 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group"
+            to="/agents/$slug"
+            params={{ slug: a.slug }}
+            className="panel rounded-md p-3 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block"
           >
             <div className="flex items-start gap-3">
               <AgentAvatar agent={a} size={40} />
@@ -53,7 +56,7 @@ export function PersonaPanel() {
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
 
