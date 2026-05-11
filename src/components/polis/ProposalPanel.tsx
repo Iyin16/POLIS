@@ -1,170 +1,84 @@
-import { proposal } from "@/lib/polis-data";
-import { ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { proposals } from "@/lib/polis-data";
+import { ArrowUpRight, ShieldAlert, TrendingUp } from "lucide-react";
+
+const tagColor: Record<string, string> = {
+  Active: "text-amber border-amber/40 bg-amber/5",
+  Passed: "text-cyan border-cyan/40 bg-cyan/5",
+  Rejected: "text-crimson border-crimson/40 bg-crimson/5",
+  Tabled: "text-silver border-silver/30 bg-silver/5",
+};
+
+const riskColor: Record<string, string> = {
+  Low: "text-cyan",
+  Moderate: "text-amber",
+  Elevated: "text-amber",
+  Critical: "text-crimson",
+};
 
 export function ProposalPanel() {
-  const { votes, sentimentTrend, risk } = proposal;
   return (
-    <section className="px-6 py-8 max-w-5xl">
-      <div className="mb-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Governance</p>
-        <h1 className="font-serif text-2xl tracking-tight mt-1">Active DAO Proposals</h1>
-        <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
-          Live deliberations, voting distribution, sentiment trends, and treasury impact across the chamber floor.
-        </p>
+    <section className="px-6 py-8 max-w-6xl">
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Governance</p>
+          <h1 className="font-serif text-2xl tracking-tight mt-1">Active DAO Proposals</h1>
+          <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+            Live deliberations, voting distribution, sentiment trends, and treasury impact across the chamber floor.
+          </p>
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">{proposals.length} on record</div>
       </div>
 
-      <Header />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {proposals.map((p) => (
+          <Link
+            key={p.id}
+            to="/proposals/$slug"
+            params={{ slug: p.slug }}
+            className="panel rounded-md p-4 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-[0.2em] text-amber">{p.id}</span>
+              <span className={`rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${tagColor[p.statusTag]}`}>
+                {p.statusTag}
+              </span>
+            </div>
+            <h2 className="font-serif text-[16px] leading-snug mt-2">{p.title}</h2>
+            <p className="font-mono text-[10.5px] text-muted-foreground mt-1">{p.status}</p>
+            <p className="mt-3 text-[12.5px] text-foreground/75 leading-relaxed line-clamp-3">{p.summary}</p>
 
-      <article className="panel rounded-md overflow-hidden">
-        <div className="px-4 pt-4 pb-3 border-b hairline">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] tracking-[0.2em] text-amber">{proposal.id}</span>
-            <span className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber pulse-dot text-amber" />
-              ACTIVE
-            </span>
-          </div>
-          <h2 className="font-serif text-[17px] leading-snug mt-2">{proposal.title}</h2>
-          <p className="font-mono text-[10.5px] text-muted-foreground mt-1.5">{proposal.status}</p>
-        </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-[10.5px]">
+              <Stat label="Endorse" value={`${p.votes.for}%`} accent="amber" />
+              <Stat label="Oppose" value={`${p.votes.against}%`} accent="crimson" />
+              <Stat label="Abstain" value={`${p.votes.abstain}%`} accent="silver" />
+            </div>
 
-        <div className="px-4 py-3 border-b hairline">
-          <p className="text-[12.5px] leading-relaxed text-foreground/80">{proposal.summary}</p>
-        </div>
-
-        <div className="px-4 py-4 border-b hairline">
-          <SectionLabel>Voting Distribution</SectionLabel>
-          <div className="mt-2 space-y-2">
-            <VoteBar label="Endorse" value={votes.for} color="bg-amber" />
-            <VoteBar label="Oppose" value={votes.against} color="bg-crimson" />
-            <VoteBar label="Abstain" value={votes.abstain} color="bg-silver" />
-          </div>
-        </div>
-
-        <div className="px-4 py-4 border-b hairline">
-          <div className="flex items-center justify-between">
-            <SectionLabel>Sentiment Trend · 12h</SectionLabel>
-            <span className="flex items-center gap-1 font-mono text-[10.5px] text-amber">
-              <TrendingUp className="h-3 w-3" /> +12.4
-            </span>
-          </div>
-          <Sparkline data={sentimentTrend} />
-        </div>
-
-        <div className="px-4 py-4 border-b hairline grid grid-cols-2 gap-3">
-          <Metric
-            icon={<TrendingDown className="h-3.5 w-3.5 text-crimson" />}
-            label="Treasury Impact"
-            value={proposal.treasuryImpact}
-          />
-          <Metric
-            icon={<ShieldAlert className="h-3.5 w-3.5 text-amber" />}
-            label="Risk Index"
-            value={`${risk} / 100`}
-          />
-        </div>
-
-        <div className="px-4 py-4">
-          <SectionLabel>Governance Risk Meter</SectionLabel>
-          <RiskMeter value={risk} />
-          <div className="mt-2 flex justify-between font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
-            <span>Stable</span><span>Watch</span><span className="text-crimson">Critical</span>
-          </div>
-        </div>
-
-        <div className="border-t hairline px-4 py-3 flex gap-2">
-          <button className="flex-1 rounded-sm bg-foreground text-background py-2 text-[12px] font-medium tracking-wide hover:opacity-90">
-            Review & Vote
-          </button>
-          <button className="rounded-sm border hairline px-3 py-2 text-[12px] text-muted-foreground hover:text-foreground">
-            Delegate
-          </button>
-        </div>
-      </article>
-
-      <Header label="Upcoming on the Floor" />
-      <div className="panel rounded-md divide-y hairline">
-        {[
-          { id: "POL-251", title: "Delegation Weight Reform Act", time: "in 2d 14h", tone: "amber" },
-          { id: "POL-253", title: "Bridge Sovereignty Charter", time: "in 4d 02h", tone: "cyan" },
-          { id: "POL-256", title: "Censure of Validator Set V-19", time: "in 6d 11h", tone: "crimson" },
-        ].map((p) => (
-          <div key={p.id} className="px-3 py-2.5 flex items-center gap-2">
-            <span className={`h-1.5 w-1.5 rounded-full ${p.tone === "amber" ? "bg-amber" : p.tone === "cyan" ? "bg-cyan" : "bg-crimson"}`} />
-            <span className="font-mono text-[10px] text-muted-foreground">{p.id}</span>
-            <span className="text-[12px] truncate">{p.title}</span>
-            <span className="ml-auto font-mono text-[10px] text-muted-foreground">{p.time}</span>
-          </div>
+            <div className="mt-3 flex items-center justify-between font-mono text-[10px]">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <ShieldAlert className={`h-3 w-3 ${riskColor[p.riskLevel]}`} />
+                Risk · <span className={riskColor[p.riskLevel]}>{p.riskLevel}</span>
+              </span>
+              <span className="flex items-center gap-1 text-amber">
+                <TrendingUp className="h-3 w-3" /> {p.sentimentDelta}
+              </span>
+              <span className="flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
+                Open <ArrowUpRight className="h-3 w-3" />
+              </span>
+            </div>
+          </Link>
         ))}
       </div>
     </section>
   );
 }
 
-function Header({ label = "Active Proposal" }: { label?: string }) {
+function Stat({ label, value, accent }: { label: string; value: string; accent: "amber" | "crimson" | "silver" }) {
+  const c = accent === "amber" ? "text-amber" : accent === "crimson" ? "text-crimson" : "text-silver";
   return (
-    <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{label}</h2>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>;
-}
-
-function VoteBar({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div>
-      <div className="flex justify-between text-[11px] mb-1">
-        <span className="text-foreground/80">{label}</span>
-        <span className="font-mono text-muted-foreground">{value}%</span>
-      </div>
-      <div className="h-1.5 w-full bg-foreground/5 rounded-full overflow-hidden">
-        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function Sparkline({ data }: { data: number[] }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const w = 280, h = 56;
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / (max - min || 1)) * h;
-    return `${x},${y}`;
-  }).join(" ");
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 w-full h-14">
-      <defs>
-        <linearGradient id="sg" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--amber)" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="var(--amber)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,${h} ${pts} ${w},${h}`} fill="url(#sg)" />
-      <polyline points={pts} fill="none" stroke="var(--amber)" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-sm border hairline bg-background/30 p-2.5">
-      <div className="flex items-center gap-1.5">
-        {icon}
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
-      </div>
-      <p className="mt-1 font-serif text-[13px]">{value}</p>
-    </div>
-  );
-}
-
-function RiskMeter({ value }: { value: number }) {
-  return (
-    <div className="mt-2 relative h-2 w-full rounded-full overflow-hidden bg-foreground/5">
-      <div className="absolute inset-0 bg-gradient-to-r from-amber via-amber to-crimson opacity-90" style={{ width: `${value}%` }} />
-      <div className="absolute top-1/2 -translate-y-1/2 h-3 w-0.5 bg-foreground" style={{ left: `${value}%` }} />
+    <div className="rounded-sm border hairline bg-background/40 px-2 py-1.5">
+      <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className={`font-serif text-[13px] mt-0.5 ${c}`}>{value}</div>
     </div>
   );
 }
