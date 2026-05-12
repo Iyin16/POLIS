@@ -57,6 +57,7 @@ export function TopNav() {
         </div>
       </div>
       <Ticker />
+      <ChamberAlertBar />
     </header>
   );
 }
@@ -67,6 +68,33 @@ function Ticker() {
     <div className="border-t hairline overflow-hidden">
       <div className="flex whitespace-nowrap py-1.5 ticker font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
         <span className="px-6">{line}   ·   {line}</span>
+      </div>
+    </div>
+  );
+}
+
+function ChamberAlertBar() {
+  const idx = rotatingIndex(chamberAlerts.length, 2);
+  const a = chamberAlerts[idx];
+  const tone =
+    a.level === "emergency"
+      ? { icon: Siren, color: "text-crimson", border: "border-crimson/40", bg: "bg-crimson/[0.05]", tag: "Emergency" }
+      : a.level === "warning"
+        ? { icon: AlertTriangle, color: "text-amber", border: "border-amber/40", bg: "bg-amber/[0.04]", tag: "Warning" }
+        : { icon: Activity, color: "text-cyan", border: "border-cyan/40", bg: "bg-cyan/[0.04]", tag: "Notice" };
+  const Icon = tone.icon;
+  return (
+    <div className={`border-t hairline ${tone.bg}`}>
+      <div className="flex items-center gap-3 px-6 py-1.5 fade-in">
+        <span className={`inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] rounded-sm border ${tone.border} ${tone.color} px-1.5 py-0.5`}>
+          <Icon className="h-3 w-3" /> {tone.tag}
+        </span>
+        <span className={`font-serif text-[12.5px] ${tone.color}`}>{a.label}</span>
+        <span className="text-muted-foreground/40 hidden md:inline">·</span>
+        <span className="hidden md:inline text-[12px] text-foreground/75 truncate">{a.body}</span>
+        <span className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
+          Cycle 31 · live
+        </span>
       </div>
     </div>
   );
