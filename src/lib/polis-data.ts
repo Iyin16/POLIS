@@ -726,4 +726,161 @@ export const chamberSignals = [
   "Validator Set V-19 censure motion advancing · POL-256",
   "Delegation registry attestation due in 06:42:11",
   "Chamber stability score: 74 / 100 · elevated but cautious",
+  "Reformist bloc influence +3.1% · Sovereigntist −0.8%",
+  "Governance confidence weakening · 3-cycle moving average down 4.2 points",
+  "Sovereign Reserve Doctrine invoked on the chamber floor · 4th time this cycle",
+  "Velocity Caucus filing counter-amendment to POL-247",
+  "Constitutional review panel convened · Cycle 31 procedural docket",
+  "Cross-faction back-channel detected · Aurelia Vex ↔ Marcus Pell",
+  "Delegator turnout projection: 47% · trending below legitimacy threshold",
+  "Bridge attestation cadence reaffirmed · censorship-resistance score 96/100",
+];
+
+export type Era = {
+  id: string;
+  name: string;
+  cycles: string;
+  years: string;
+  doctrine: string;
+  summary: string;
+  defining: string[];
+};
+
+export const eras: Era[] = [
+  {
+    id: "e1",
+    name: "Founding Republic",
+    cycles: "Cycles 1–13",
+    years: "2030 – Q1 2031",
+    doctrine: "Open Treasury · Direct Delegation",
+    summary:
+      "The chamber's formative era. Governance was direct, the treasury was open, and procedural memory had not yet calcified. Foundational figures still held veto seats.",
+    defining: [
+      "Ratification of the original Polis Charter.",
+      "First sovereign reserve allocation.",
+      "Establishment of the cycle-based deliberation cadence.",
+    ],
+  },
+  {
+    id: "e2",
+    name: "Liquidity Wars",
+    cycles: "Cycles 14–18",
+    years: "Q2 2031 – Q4 2031",
+    doctrine: "Yield Maximalism (collapsed)",
+    summary:
+      "The era of POL-119 and its aftermath. Aggressive cross-vault reallocation collapsed the treasury, three founders resigned, and the Sovereign Reserve Doctrine was authored as institutional scar tissue.",
+    defining: [
+      "Treasury Collapse of POL-119.",
+      "Authorship of the Sovereign Reserve Doctrine.",
+      "Formation of the Sovereign Reserve Bloc.",
+    ],
+  },
+  {
+    id: "e3",
+    name: "Registry Crisis",
+    cycles: "Cycles 19–21",
+    years: "Q1 2032 – Q3 2032",
+    doctrine: "Verified Participation",
+    summary:
+      "POL-188's nullification exposed structural gaps in the delegation registry. The chamber spent three cycles rebuilding procedural trust under cryptographic attestation.",
+    defining: [
+      "Delegation Registry Incident.",
+      "Adoption of the Verified Registry Standard.",
+      "Permanent procedural hold on registry-dependent motions.",
+    ],
+  },
+  {
+    id: "e4",
+    name: "Concordat Era",
+    cycles: "Cycles 22–24",
+    years: "Q4 2032 – Q2 2033",
+    doctrine: "Reformist–Technocrat Concordat",
+    summary:
+      "The chamber's most stable interval. Cross-factional risk doctrine binding any treasury proposal above 5% exposure to a sunset clause and independent agent audit.",
+    defining: [
+      "Ratification of the Reformist–Technocrat Concordat.",
+      "Sustained +14% cross-faction trust.",
+      "Three consecutive cycles without procedural nullification.",
+    ],
+  },
+  {
+    id: "e5",
+    name: "Populist Turn",
+    cycles: "Cycles 25–27",
+    years: "Q3 2033 – Q1 2034",
+    doctrine: "Legitimacy by Participation",
+    summary:
+      "The Quiet Election (29% turnout) catalyzed the Civic Populist movement. Soren Iliad's coalition built itself directly on the chamber's perceived aristocratization.",
+    defining: [
+      "The Quiet Election.",
+      "Formation of the Delegator Front.",
+      "Turnout institutionalized as a legitimacy metric.",
+    ],
+  },
+  {
+    id: "e6",
+    name: "Sovereignty Doctrine",
+    cycles: "Cycles 28–31",
+    years: "Q2 2034 – present",
+    doctrine: "Sovereign Egress · Censorship Resistance",
+    summary:
+      "The current era. Triggered by the Bridge Censorship Crisis, the chamber now operates under a standing sovereignty doctrine and the unfinished deliberations of POL-247, POL-251, and POL-253.",
+    defining: [
+      "Bridge Censorship Crisis.",
+      "Drafting of the Bridge Sovereignty Charter (POL-253).",
+      "Active deliberation: POL-247, POL-251, POL-256.",
+    ],
+  },
+];
+
+export type Treaty = {
+  id: string;
+  name: string;
+  cycle: string;
+  parties: string;
+  status: "Binding" | "Contested" | "Lapsed";
+  summary: string;
+};
+
+export const treaties: Treaty[] = [
+  {
+    id: "t1",
+    name: "Sovereign Reserve Doctrine",
+    cycle: "Cycle 14",
+    parties: "Chamber-wide · authored by Aurelia Vex",
+    status: "Binding",
+    summary: "Caps treasury exposure and binds reallocation to historical drawdown stress tests.",
+  },
+  {
+    id: "t2",
+    name: "Verified Registry Standard",
+    cycle: "Cycle 19",
+    parties: "Procedural Continuity Bloc · Verification Caucus",
+    status: "Binding",
+    summary: "Bars governance-weight motions absent a fully attested delegation registry.",
+  },
+  {
+    id: "t3",
+    name: "Reformist–Technocrat Concordat",
+    cycle: "Cycle 22",
+    parties: "Aurelia Vex · Nyx Halberd",
+    status: "Binding",
+    summary: "Cross-factional risk doctrine binding treasury proposals above 5% exposure.",
+  },
+  {
+    id: "t4",
+    name: "Egress Protocol Accord",
+    cycle: "Cycle 28",
+    parties: "Chamber emergency session",
+    status: "Contested",
+    summary: "Sovereign egress protocol awaiting permanent codification under POL-253.",
+  },
+  {
+    id: "t5",
+    name: "Civic Participation Compact",
+    cycle: "Cycle 26",
+    parties: "Delegator Front · Procedural Continuity Bloc",
+    status: "Lapsed",
+    summary: "Turnout-floor commitment that lapsed after the Quiet Election fallout.",
+  },
 ];
