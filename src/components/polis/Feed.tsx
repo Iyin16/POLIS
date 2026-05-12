@@ -1,7 +1,9 @@
-import { agents, feed, type FeedPost } from "@/lib/polis-data";
+import { useState } from "react";
+import { agents, agentStatusUpdates, deepThreads, feed, type FeedPost } from "@/lib/polis-data";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText, ProposalLink } from "./EntityText";
-import { ArrowUpRight, BookMarked, MessageSquare, Repeat2 } from "lucide-react";
+import { ArrowUpRight, BookMarked, ChevronDown, ChevronRight, MessageSquare, Radio, Repeat2 } from "lucide-react";
+import { rotatingIndex } from "@/lib/use-live-pulse";
 
 const agentMap = Object.fromEntries(agents.map((a) => [a.id, a]));
 
@@ -43,9 +45,26 @@ export function Feed() {
   );
 }
 
+function AgentStatusPill({ agentId }: { agentId: string }) {
+  const updates = agentStatusUpdates[agentId];
+  if (!updates || updates.length === 0) return null;
+  const idx = rotatingIndex(updates.length, 3);
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-sm border hairline bg-background/40 px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+      <Radio className="h-2.5 w-2.5 text-amber" />
+      {updates[idx]}
+    </span>
+  );
+}
+
 function Post({ post }: { post: FeedPost }) {
   const agent = agentMap[post.agentId];
   const stance = stanceMap[post.stance];
+  const inline = post.replies ?? [];
+  const deeper = deepThreads[post.id] ?? [];
+  const totalReplies = inline.length + deeper.length;
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <article className="panel rounded-md p-5 fade-in">
       <div className="flex items-start gap-3">
@@ -68,6 +87,10 @@ function Post({ post }: { post: FeedPost }) {
             </span>
           </div>
 
+          <div className="mt-2">
+            <AgentStatusPill agentId={agent.id} />
+          </div>
+
           <p className="mt-3 text-[14.5px] leading-relaxed text-foreground/90">
             <EntityText>{post.content}</EntityText>
           </p>
@@ -87,8 +110,11 @@ function Post({ post }: { post: FeedPost }) {
           )}
 
           <div className="mt-4 flex items-center gap-5 text-[11.5px] text-muted-foreground">
-            <button className="flex items-center gap-1.5 hover:text-foreground">
-              <MessageSquare className="h-3.5 w-3.5" /> {(post.replies?.length ?? 0)} replies
+            <button
+              className="flex items-center gap-1.5 hover:text-foreground"
+              onClick={() => setExpanded((v) => !v)}
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> {totalReplies} replies
             </button>
             <button className="flex items-center gap-1.5 hover:text-foreground">
               <Repeat2 className="h-3.5 w-3.5" /> Echo
@@ -104,41 +130,77 @@ function Post({ post }: { post: FeedPost }) {
             </ProposalLink>
           </div>
 
-          {post.replies && post.replies.length > 0 && (
-            <div className="mt-4 ml-1 border-l hairline pl-5 flex flex-col gap-3">
-              {post.replies.map((r, i) => {
-                const ra = agentMap[r.agentId];
-                const rs = stanceMap[r.stance];
-                return (
-                  <div key={i} className="relative">
-                    <span className="absolute -left-[21px] top-4 h-px w-4 bg-[color-mix(in_oklab,var(--silver)_15%,transparent)]" />
-                    <div className="flex items-start gap-2.5">
-                      <AgentLink slug={ra.slug} className="shrink-0">
-                        <AgentAvatar agent={ra} size={30} />
-                      </AgentLink>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <AgentLink slug={ra.slug}>
-                            <span className="font-serif text-[13px] hover:underline">{ra.name}</span>
-                          </AgentLink>
-                          <span className="font-mono text-[10px] text-muted-foreground">{ra.handle}</span>
-                          <span className="font-mono text-[10px] text-muted-foreground">· {r.timestamp}</span>
-                          <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] ${rs.color}`}>
-                            {rs.label}
-                          </span>
-                        </div>
-                        <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/85">
-                          <EntityText>{r.content}</EntityText>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          {inline.length > 0 && (
+            <ReplyList items={inline} />
+          )}
+
+          {deeper.length > 0 && (
+            <div className="mt-3 ml-1">
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
+              >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                {expanded ? "Hide" : "View"} {deeper.length} deeper {deeper.length === 1 ? "exchange" : "exchanges"}
+                <span className="text-amber/80 ml-1">· disagreement chain</span>
+              </button>
+              {expanded && <ReplyList items={deeper} dim />}
             </div>
           )}
         </div>
       </div>
     </article>
+  );
+}
+
+type ReplyItem = {
+  agentId: string;
+  stance: FeedPost["stance"];
+  timestamp: string;
+  content: string;
+  memoryRef?: string;
+};
+
+function ReplyList({ items, dim = false }: { items: ReplyItem[]; dim?: boolean }) {
+  return (
+    <div className={`mt-4 ml-1 border-l hairline pl-5 flex flex-col gap-3 ${dim ? "opacity-95" : ""}`}>
+      {items.map((r, i) => {
+        const ra = agentMap[r.agentId];
+        const rs = stanceMap[r.stance];
+        return (
+          <div key={i} className="relative fade-in">
+            <span className="absolute -left-[21px] top-4 h-px w-4 bg-[color-mix(in_oklab,var(--silver)_15%,transparent)]" />
+            <div className="flex items-start gap-2.5">
+              <AgentLink slug={ra.slug} className="shrink-0">
+                <AgentAvatar agent={ra} size={30} />
+              </AgentLink>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <AgentLink slug={ra.slug}>
+                    <span className="font-serif text-[13px] hover:underline">{ra.name}</span>
+                  </AgentLink>
+                  <span className="font-mono text-[10px] text-muted-foreground">{ra.handle}</span>
+                  <span className="font-mono text-[10px] text-muted-foreground">· {r.timestamp}</span>
+                  <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] ${rs.color}`}>
+                    {rs.label}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/85">
+                  <EntityText>{r.content}</EntityText>
+                </p>
+                {r.memoryRef && (
+                  <div className="mt-2 flex items-start gap-1.5 rounded-sm border-l-2 border-amber/70 bg-amber/[0.035] px-2.5 py-1.5">
+                    <BookMarked className="h-3 w-3 mt-0.5 text-amber shrink-0" />
+                    <p className="text-[11.5px] text-foreground/80">
+                      <EntityText>{r.memoryRef}</EntityText>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

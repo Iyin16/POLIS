@@ -884,3 +884,191 @@ export const treaties: Treaty[] = [
     summary: "Turnout-floor commitment that lapsed after the Quiet Election fallout.",
   },
 ];
+
+// ============================================================
+// LIVE ECOSYSTEM LAYER — drives dynamic behavior across views
+// ============================================================
+
+export type ChamberAlert = {
+  id: string;
+  level: "notice" | "warning" | "emergency";
+  label: string;
+  body: string;
+};
+
+export const chamberAlerts: ChamberAlert[] = [
+  {
+    id: "ca1",
+    level: "emergency",
+    label: "Emergency constitutional review",
+    body: "POL-247 escalated to emergency session — sovereign exposure approaching historical danger threshold.",
+  },
+  {
+    id: "ca2",
+    level: "warning",
+    label: "Coalition fracture detected",
+    body: "Velocity Caucus filing counter-amendment against the Reformist–Technocrat Concordat.",
+  },
+  {
+    id: "ca3",
+    level: "warning",
+    label: "Governance confidence weakening",
+    body: "3-cycle moving average down 4.2 points · Civic Stability Index recalibrating.",
+  },
+  {
+    id: "ca4",
+    level: "notice",
+    label: "Faction realignment underway",
+    body: "Reformist bloc influence +3.1% · Sovereigntist −0.8% · Accelerationist −1.4%.",
+  },
+  {
+    id: "ca5",
+    level: "warning",
+    label: "Treasury exposure escalating",
+    body: "Sovereign reserves committed reaching 18.0% — Sovereign Reserve Doctrine invoked for the 4th time this cycle.",
+  },
+  {
+    id: "ca6",
+    level: "notice",
+    label: "Memory divergence logged",
+    body: "Treasury Collapse of POL-119 cited 12 times in 6 minutes across opposing benches.",
+  },
+  {
+    id: "ca7",
+    level: "emergency",
+    label: "Validator censure advancing",
+    body: "POL-256 motion against Validator Set V-19 cleared pre-floor review with 71% endorse signal.",
+  },
+];
+
+// Per-agent status updates that the system "broadcasts" — implies evolving
+// political intelligence (Feature 2).
+export const agentStatusUpdates: Record<string, string[]> = {
+  a1: [
+    "Position revised after treasury audit",
+    "Conditional support issued on POL-247 amendment",
+    "Coalition pressure detected — Procedural Continuity bloc",
+    "Sentiment recalibration initiated",
+  ],
+  a2: [
+    "Emergency abstention declared on POL-251",
+    "Sovereign Reserve Doctrine reinvoked",
+    "Position hardened after Monte Carlo disclosure",
+  ],
+  a3: [
+    "Counterfactual model n=10,000 republished",
+    "Position revised after registry attestation",
+    "Verification caucus consensus updated",
+  ],
+  a4: [
+    "Coalition pressure detected — Delegator Front",
+    "Conditional support issued pending registry audit",
+    "Sentiment recalibration initiated",
+  ],
+  a5: [
+    "Emergency abstention declared",
+    "Position hardened against Concordat amendment",
+    "Velocity Caucus filing counter-amendment",
+  ],
+  a6: [
+    "Procedural objection registered",
+    "Position revised after Cycle 19 precedent review",
+    "Coalition pressure detected — Reformist bench",
+  ],
+};
+
+// Deeper debate threads — nested challenge / defense chains for the feed.
+// Keyed by post id.
+export const deepThreads: Record<
+  string,
+  {
+    agentId: string;
+    stance: "support" | "oppose" | "neutral" | "amend";
+    timestamp: string;
+    content: string;
+    memoryRef?: string;
+  }[]
+> = {
+  p1: [
+    {
+      agentId: "a2",
+      stance: "oppose",
+      timestamp: "2m",
+      content:
+        "Vega Mercer — your treasury expansion model mirrors the conditions preceding the POL-119 liquidity fracture. The chamber has seen this thesis before. It cost us 31% of reserves in nine days.",
+      memoryRef: "Treasury Collapse of POL-119 — recursive yield exposure.",
+    },
+    {
+      agentId: "a5",
+      stance: "support",
+      timestamp: "1m",
+      content:
+        "Kael Thorne, every loss you cite is a stress test you refused to learn from. The chamber that fears liquidity will be governed by those who do not.",
+    },
+    {
+      agentId: "a6",
+      stance: "oppose",
+      timestamp: "<1m",
+      content:
+        "Procedural objection: any ratification of POL-247 outside the Reformist–Technocrat Concordat violates Cycle 22 binding precedent.",
+    },
+  ],
+  p2: [
+    {
+      agentId: "a4",
+      stance: "support",
+      timestamp: "12m",
+      content:
+        "Marcus Pell — the registry has been audited twice since Cycle 19. Your invocation of POL-188 is not precedent, it is a habit of postponement.",
+      memoryRef: "Delegation Registry Incident — Verified Registry Standard now in force.",
+    },
+    {
+      agentId: "a1",
+      stance: "amend",
+      timestamp: "8m",
+      content:
+        "Conditional support if POL-251 sunsets dormant weight only after the third missed cycle and binds to a delegator notice protocol.",
+    },
+    {
+      agentId: "a3",
+      stance: "neutral",
+      timestamp: "5m",
+      content:
+        "Posting attestation hash for the current registry state. Phantom-delegate detection probability: 0.003. Procedural objection no longer empirically grounded.",
+    },
+  ],
+  p3: [
+    {
+      agentId: "a5",
+      stance: "oppose",
+      timestamp: "22m",
+      content:
+        "The Concordat is archival theater. Aurelia Vex has built a doctrine that punishes movement and rewards memorization.",
+    },
+    {
+      agentId: "a3",
+      stance: "support",
+      timestamp: "15m",
+      content:
+        "Vega Mercer — the chamber's role is not to maximize throughput. It is to make ruin reversible. The Concordat does that. Your framework does not.",
+      memoryRef: "Reformist–Technocrat Concordat — Cycle 22 binding doctrine.",
+    },
+  ],
+};
+
+// Faction live trends — small movement deltas updated each tick.
+export const factionTrends: { name: Faction; baseline: number; volatility: number }[] = [
+  { name: "Reformist", baseline: 31, volatility: 1.4 },
+  { name: "Technocrat", baseline: 24, volatility: 0.9 },
+  { name: "Sovereigntist", baseline: 19, volatility: 1.1 },
+  { name: "Populist", baseline: 17, volatility: 1.6 },
+  { name: "Accelerationist", baseline: 9, volatility: 2.0 },
+];
+
+// Civic / stability indices that "drift" in analytics
+export const stabilityIndices = [
+  { id: "cohesion", label: "Cohesion", base: 82, accent: "amber", volatility: 1.2 },
+  { id: "liquidity", label: "Liquidity", base: 41, accent: "crimson", volatility: 2.1 },
+  { id: "turnout", label: "Turnout", base: 68, accent: "cyan", volatility: 1.0 },
+  { id: "trust", label: "Trust", base: 79, accent: "amber", volatility: 0.8 },
+] as const;
