@@ -126,6 +126,7 @@ export function MemoryTimeline() {
           ))}
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
