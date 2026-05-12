@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { memories } from "@/lib/polis-data";
+import { eras, memories, treaties } from "@/lib/polis-data";
+import { EntityText } from "./EntityText";
+
+const treatyColor: Record<string, string> = {
+  Binding: "text-amber border-amber/40 bg-amber/5",
+  Contested: "text-cyan border-cyan/40 bg-cyan/5",
+  Lapsed: "text-silver border-silver/30 bg-silver/5",
+};
 
 const catColor: Record<string, string> = {
   Treasury: "text-crimson border-crimson/40",
@@ -11,14 +18,75 @@ const catColor: Record<string, string> = {
 
 export function MemoryTimeline() {
   return (
-    <section className="px-6 py-10 border-t hairline">
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Persistent Memory</p>
-          <h2 className="font-serif text-2xl tracking-tight mt-1">Institutional Memory Timeline</h2>
-          <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
-            Events the chamber refuses to forget. Every agent references this archive when forming positions.
-          </p>
+    <>
+      <section className="px-6 py-10">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Civilizational History</p>
+            <h2 className="font-serif text-2xl tracking-tight mt-1">Governance Eras of Polis</h2>
+            <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+              Six discrete political epochs the chamber has lived through. Each era's doctrine still shapes contemporary deliberation.
+            </p>
+          </div>
+          <span className="font-mono text-[10px] text-muted-foreground hidden md:inline">Cycle 1 → Cycle 31 · 31 cycles indexed</span>
+        </div>
+        <div className="relative">
+          <div className="absolute left-0 right-0 top-[26px] h-px bg-[color-mix(in_oklab,var(--silver)_12%,transparent)]" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            {eras.map((e, i) => (
+              <article key={e.id} className="relative">
+                <div className="flex items-center gap-2 h-[26px]">
+                  <span className="font-mono text-[9.5px] tracking-[0.16em] text-muted-foreground uppercase">{e.cycles}</span>
+                </div>
+                <span className={`absolute -top-[3px] left-0 h-1.5 w-1.5 rounded-full ${i === eras.length - 1 ? "bg-amber glow-amber" : i % 2 ? "bg-cyan" : "bg-silver"}`} />
+                <div className="panel rounded-md p-3 mt-1">
+                  <h3 className="font-serif text-[13.5px] leading-tight">{e.name}</h3>
+                  <p className="font-mono text-[9.5px] text-muted-foreground mt-0.5">{e.years}</p>
+                  <p className="mt-2 text-[10.5px] uppercase tracking-[0.14em] text-cyan/80 font-mono">{e.doctrine}</p>
+                  <p className="text-[11.5px] text-foreground/75 mt-2 leading-relaxed line-clamp-4"><EntityText>{e.summary}</EntityText></p>
+                  <ul className="mt-2 space-y-0.5">
+                    {e.defining.slice(0, 2).map((d, j) => (
+                      <li key={j} className="flex gap-1.5 text-[10.5px] text-muted-foreground"><span className="text-amber">·</span><span className="line-clamp-1"><EntityText>{d}</EntityText></span></li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8 border-t hairline">
+        <div className="mb-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Standing Doctrine</p>
+          <h2 className="font-serif text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
+        </div>
+        <div className="panel rounded-md divide-y hairline">
+          {treaties.map((t) => (
+            <div key={t.id} className="grid grid-cols-12 gap-3 px-4 py-3 items-start">
+              <div className="col-span-12 md:col-span-4">
+                <div className="font-serif text-[13.5px] leading-tight">{t.name}</div>
+                <div className="font-mono text-[10px] text-muted-foreground mt-0.5">{t.cycle} · {t.parties}</div>
+              </div>
+              <div className="col-span-9 md:col-span-6 text-[12px] text-foreground/80 leading-relaxed">
+                <EntityText>{t.summary}</EntityText>
+              </div>
+              <div className="col-span-3 md:col-span-2 flex md:justify-end">
+                <span className={`rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${treatyColor[t.status]}`}>{t.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-6 py-10 border-t hairline">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Persistent Memory</p>
+            <h2 className="font-serif text-2xl tracking-tight mt-1">Institutional Memory Timeline</h2>
+            <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+              Events the chamber refuses to forget. Every agent references this archive when forming positions.
+            </p>
         </div>
         <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-amber" /> 1,284 indexed events
@@ -58,6 +126,7 @@ export function MemoryTimeline() {
           ))}
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
