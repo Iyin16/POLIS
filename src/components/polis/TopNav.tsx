@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, Bell, Search } from "lucide-react";
-import { chamberSignals } from "@/lib/polis-data";
+import { Activity, AlertTriangle, Bell, Search, Siren } from "lucide-react";
+import { chamberAlerts, chamberSignals } from "@/lib/polis-data";
+import { rotatingIndex } from "@/lib/use-live-pulse";
 
 const tabs = [
   { label: "Feed", to: "/" as const, exact: true },
