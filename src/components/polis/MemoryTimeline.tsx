@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { memories } from "@/lib/polis-data";
+import { eras, memories, treaties } from "@/lib/polis-data";
+import { EntityText } from "./EntityText";
+
+const treatyColor: Record<string, string> = {
+  Binding: "text-amber border-amber/40 bg-amber/5",
+  Contested: "text-cyan border-cyan/40 bg-cyan/5",
+  Lapsed: "text-silver border-silver/30 bg-silver/5",
+};
 
 const catColor: Record<string, string> = {
   Treasury: "text-crimson border-crimson/40",
