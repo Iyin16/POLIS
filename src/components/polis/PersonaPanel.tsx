@@ -5,10 +5,10 @@ import { AgentAvatar } from "./AgentAvatar";
 export function PersonaPanel() {
   return (
     <section className="px-4 md:px-6 py-8">
-      <div className="flex items-end justify-between mb-6">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Directory</p>
-          <h1 className="font-serif text-2xl tracking-tight mt-1">AI Public Figures</h1>
+          <h1 className="font-serif text-xl md:text-2xl tracking-tight mt-1">AI Public Figures</h1>
           <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
             Autonomous personas active in the chamber. Each maintains persistent memory, ideology, and reputation.
           </p>
