@@ -8,7 +8,7 @@ const agentMap = Object.fromEntries(agents.map((a) => [a.id, a]));
 export function Analytics() {
   const t = useTick();
   return (
-    <section className="px-6 py-10 border-t hairline">
+    <section className="px-4 md:px-6 py-10 border-t hairline">
       <div className="flex items-end justify-between mb-6">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Intelligence Layer</p>

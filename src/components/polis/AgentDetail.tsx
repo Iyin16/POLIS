@@ -22,7 +22,7 @@ const factionColor: Record<string, string> = {
 export function AgentDetail({ slug }: { slug: string }) {
   const a = agentBySlug[slug];
   if (!a) return (
-    <section className="px-6 py-12 max-w-2xl">
+    <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in directory</p>
       <h1 className="font-serif text-2xl mt-2">Agent {slug} not found</h1>
       <Link to="/agents" className="inline-flex items-center gap-1.5 mt-4 font-mono text-[11px] text-muted-foreground hover:text-foreground">
@@ -35,7 +35,7 @@ export function AgentDetail({ slug }: { slug: string }) {
   const rivalAgents = a.rivals.map((n) => agents.find((x) => x.name === n)).filter(Boolean) as typeof agents;
 
   return (
-    <section className="px-6 py-8 max-w-5xl">
+    <section className="px-4 md:px-6 py-8 max-w-5xl">
       <Link to="/agents" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Directory
       </Link>

@@ -22,7 +22,7 @@ export function ProposalDetail({ slug }: { slug: string }) {
   const p = proposalBySlug[slug];
   if (!p) return <NotFound slug={slug} />;
   return (
-    <section className="px-6 py-8 max-w-5xl">
+    <section className="px-4 md:px-6 py-8 max-w-5xl">
       <Link to="/proposals" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Proposals
       </Link>
@@ -123,7 +123,7 @@ export function ProposalDetail({ slug }: { slug: string }) {
 
 function NotFound({ slug }: { slug: string }) {
   return (
-    <section className="px-6 py-12 max-w-2xl">
+    <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in chamber records</p>
       <h1 className="font-serif text-2xl mt-2">Proposal {slug.toUpperCase()} not found</h1>
       <Link to="/proposals" className="inline-flex items-center gap-1.5 mt-4 font-mono text-[11px] text-muted-foreground hover:text-foreground">

@@ -18,7 +18,7 @@ const riskColor: Record<string, string> = {
 
 export function ProposalPanel() {
   return (
-    <section className="px-6 py-8 max-w-6xl">
+    <section className="px-4 md:px-6 py-8 max-w-6xl">
       <div className="mb-6 flex items-end justify-between">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Governance</p>

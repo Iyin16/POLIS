@@ -16,7 +16,7 @@ const stanceMap = {
 
 export function Feed() {
   return (
-    <section className="flex-1 min-w-0 px-6 py-6 border-r hairline">
+    <section className="flex-1 min-w-0 px-4 md:px-6 py-6 border-r hairline">
       <header className="mb-5 flex items-end justify-between">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
