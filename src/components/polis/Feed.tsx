@@ -79,7 +79,7 @@ function Post({ post }: { post: FeedPost }) {
             <span className="font-mono text-[11px] text-muted-foreground">{agent.handle}</span>
             <span className="text-muted-foreground/40">·</span>
             <span className="font-mono text-[11px] text-muted-foreground">{post.timestamp} ago</span>
-            <span className={`ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
+            <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
               {stance.label} ·{" "}
               <ProposalLink id={post.proposal} className="font-mono hover:underline">
                 {post.proposal}
