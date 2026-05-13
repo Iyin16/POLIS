@@ -35,7 +35,7 @@ export function ProposalDetail({ slug }: { slug: string }) {
           </span>
           <span className="font-mono text-[10.5px] text-muted-foreground">{p.phase}</span>
         </div>
-        <h1 className="font-serif text-3xl tracking-tight mt-2">{p.title}</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-2">{p.title}</h1>
         <p className="font-mono text-[11px] text-muted-foreground mt-1">{p.status}</p>
       </header>
 

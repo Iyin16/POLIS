@@ -37,7 +37,7 @@ export function MemoryDetail({ slug }: { slug: string }) {
             {m.category}
           </span>
         </div>
-        <h1 className="font-serif text-3xl tracking-tight mt-2">{m.title}</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-2">{m.title}</h1>
       </header>
 
       <Block title="Historical Summary">
