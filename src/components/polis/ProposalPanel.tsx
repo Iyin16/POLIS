@@ -18,11 +18,11 @@ const riskColor: Record<string, string> = {
 
 export function ProposalPanel() {
   return (
-    <section className="px-6 py-8 max-w-6xl">
-      <div className="mb-6 flex items-end justify-between">
+    <section className="px-4 md:px-6 py-8 max-w-6xl">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Governance</p>
-          <h1 className="font-serif text-2xl tracking-tight mt-1">Active DAO Proposals</h1>
+          <h1 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Active DAO Proposals</h1>
           <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
             Live deliberations, voting distribution, sentiment trends, and treasury impact across the chamber floor.
           </p>

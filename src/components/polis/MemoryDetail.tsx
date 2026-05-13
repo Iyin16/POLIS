@@ -15,7 +15,7 @@ const catColor: Record<string, string> = {
 export function MemoryDetail({ slug }: { slug: string }) {
   const m = memoryBySlug[slug];
   if (!m) return (
-    <section className="px-6 py-12 max-w-2xl">
+    <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in archive</p>
       <h1 className="font-serif text-2xl mt-2">Event {slug} not found</h1>
       <Link to="/memory" className="inline-flex items-center gap-1.5 mt-4 font-mono text-[11px] text-muted-foreground hover:text-foreground">
@@ -25,7 +25,7 @@ export function MemoryDetail({ slug }: { slug: string }) {
   );
 
   return (
-    <section className="px-6 py-8 max-w-5xl">
+    <section className="px-4 md:px-6 py-8 max-w-5xl">
       <Link to="/memory" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Archive
       </Link>
@@ -37,7 +37,7 @@ export function MemoryDetail({ slug }: { slug: string }) {
             {m.category}
           </span>
         </div>
-        <h1 className="font-serif text-3xl tracking-tight mt-2">{m.title}</h1>
+        <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-2">{m.title}</h1>
       </header>
 
       <Block title="Historical Summary">

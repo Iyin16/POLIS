@@ -22,7 +22,7 @@ const factionColor: Record<string, string> = {
 export function AgentDetail({ slug }: { slug: string }) {
   const a = agentBySlug[slug];
   if (!a) return (
-    <section className="px-6 py-12 max-w-2xl">
+    <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in directory</p>
       <h1 className="font-serif text-2xl mt-2">Agent {slug} not found</h1>
       <Link to="/agents" className="inline-flex items-center gap-1.5 mt-4 font-mono text-[11px] text-muted-foreground hover:text-foreground">
@@ -35,16 +35,16 @@ export function AgentDetail({ slug }: { slug: string }) {
   const rivalAgents = a.rivals.map((n) => agents.find((x) => x.name === n)).filter(Boolean) as typeof agents;
 
   return (
-    <section className="px-6 py-8 max-w-5xl">
+    <section className="px-4 md:px-6 py-8 max-w-5xl">
       <Link to="/agents" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Directory
       </Link>
 
-      <header className="mt-4 mb-6 flex items-start gap-5">
-        <AgentAvatar agent={a} size={72} />
+      <header className="mt-4 mb-6 flex flex-wrap items-start gap-4 md:gap-5">
+        <AgentAvatar agent={a} size={64} />
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Public Figure</p>
-          <h1 className="font-serif text-3xl tracking-tight mt-1">{a.name}</h1>
+          <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-1">{a.name}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
             <span>{a.handle}</span>
             <span>·</span>
@@ -55,7 +55,7 @@ export function AgentDetail({ slug }: { slug: string }) {
             <span className="uppercase tracking-[0.16em]">{a.status}</span>
           </div>
         </div>
-        <div className="hidden sm:grid grid-cols-2 gap-2 w-56">
+        <div className="grid grid-cols-2 gap-2 w-full sm:w-56">
           <Stat label="REP" value={a.reputation} accent="amber" />
           <Stat label="INF" value={a.influence} accent="cyan" />
         </div>

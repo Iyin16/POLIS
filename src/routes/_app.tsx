@@ -26,7 +26,7 @@ function AppLayout() {
         </main>
       </div>
       <AtmosphereBar />
-      <footer className="border-t hairline px-6 py-5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+      <footer className="border-t hairline px-4 md:px-6 py-5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         <span className="font-serif italic">Polis</span>
         <span>·</span>
         <span className="font-mono uppercase tracking-[0.18em]">Chamber Cycle 31 · Quorum 64%</span>
@@ -42,7 +42,7 @@ function AtmosphereBar() {
   const exposure = driftedValue("atm-exposure", 18, 0.8, 1);
   return (
     <div className="border-t hairline bg-background/40">
-      <div className="px-6 py-2 flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="px-4 md:px-6 py-2 flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         <span className="flex items-center gap-1.5 text-amber">
           <span className="h-1.5 w-1.5 rounded-full bg-amber pulse-dot" />
           Chamber live

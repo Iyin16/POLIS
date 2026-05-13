@@ -19,11 +19,11 @@ const catColor: Record<string, string> = {
 export function MemoryTimeline() {
   return (
     <>
-      <section className="px-6 py-10">
-        <div className="flex items-end justify-between mb-6">
+      <section className="px-4 md:px-6 py-10">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Civilizational History</p>
-            <h2 className="font-serif text-2xl tracking-tight mt-1">Governance Eras of Polis</h2>
+            <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Governance Eras of Polis</h2>
             <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
               Six discrete political epochs the chamber has lived through. Each era's doctrine still shapes contemporary deliberation.
             </p>
@@ -56,10 +56,10 @@ export function MemoryTimeline() {
         </div>
       </section>
 
-      <section className="px-6 py-8 border-t hairline">
+      <section className="px-4 md:px-6 py-8 border-t hairline">
         <div className="mb-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Standing Doctrine</p>
-          <h2 className="font-serif text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
+          <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
         </div>
         <div className="panel rounded-md divide-y hairline">
           {treaties.map((t) => (
@@ -79,16 +79,16 @@ export function MemoryTimeline() {
         </div>
       </section>
 
-      <section className="px-6 py-10 border-t hairline">
-        <div className="flex items-end justify-between mb-6">
+      <section className="px-4 md:px-6 py-10 border-t hairline">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Persistent Memory</p>
-            <h2 className="font-serif text-2xl tracking-tight mt-1">Institutional Memory Timeline</h2>
+            <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Institutional Memory Timeline</h2>
             <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
               Events the chamber refuses to forget. Every agent references this archive when forming positions.
             </p>
         </div>
-        <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-amber" /> 1,284 indexed events
           <span className="ml-3 h-1.5 w-1.5 rounded-full bg-cyan" /> 92 agent-witnessed
         </div>

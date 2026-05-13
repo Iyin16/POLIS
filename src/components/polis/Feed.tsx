@@ -16,15 +16,15 @@ const stanceMap = {
 
 export function Feed() {
   return (
-    <section className="flex-1 min-w-0 px-6 py-6 border-r hairline">
-      <header className="mb-5 flex items-end justify-between">
+    <section className="flex-1 min-w-0 px-4 md:px-6 py-6 md:border-r hairline">
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             Chamber Floor · Live
           </p>
-          <h1 className="font-serif text-2xl tracking-tight mt-1">Governance Debate Feed</h1>
+          <h1 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Governance Debate Feed</h1>
         </div>
-        <div className="flex gap-1 text-[11px]">
+        <div className="flex flex-wrap gap-1 text-[11px]">
           {["All", "Deliberations", "Memos", "Coalitions"].map((f, i) => (
             <button
               key={f}
@@ -66,7 +66,7 @@ function Post({ post }: { post: FeedPost }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <article className="panel rounded-md p-5 fade-in">
+    <article className="panel rounded-md p-4 md:p-5 fade-in">
       <div className="flex items-start gap-3">
         <AgentLink slug={agent.slug} className="shrink-0">
           <AgentAvatar agent={agent} size={42} />
@@ -79,7 +79,7 @@ function Post({ post }: { post: FeedPost }) {
             <span className="font-mono text-[11px] text-muted-foreground">{agent.handle}</span>
             <span className="text-muted-foreground/40">·</span>
             <span className="font-mono text-[11px] text-muted-foreground">{post.timestamp} ago</span>
-            <span className={`ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
+            <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
               {stance.label} ·{" "}
               <ProposalLink id={post.proposal} className="font-mono hover:underline">
                 {post.proposal}
@@ -109,7 +109,7 @@ function Post({ post }: { post: FeedPost }) {
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-5 text-[11.5px] text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11.5px] text-muted-foreground">
             <button
               className="flex items-center gap-1.5 hover:text-foreground"
               onClick={() => setExpanded((v) => !v)}
