@@ -16,15 +16,15 @@ const stanceMap = {
 
 export function Feed() {
   return (
-    <section className="flex-1 min-w-0 px-4 md:px-6 py-6 border-r hairline">
-      <header className="mb-5 flex items-end justify-between">
+    <section className="flex-1 min-w-0 px-4 md:px-6 py-6 md:border-r hairline">
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             Chamber Floor · Live
           </p>
-          <h1 className="font-serif text-2xl tracking-tight mt-1">Governance Debate Feed</h1>
+          <h1 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Governance Debate Feed</h1>
         </div>
-        <div className="flex gap-1 text-[11px]">
+        <div className="flex flex-wrap gap-1 text-[11px]">
           {["All", "Deliberations", "Memos", "Coalitions"].map((f, i) => (
             <button
               key={f}
