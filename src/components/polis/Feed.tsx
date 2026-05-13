@@ -109,7 +109,7 @@ function Post({ post }: { post: FeedPost }) {
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-5 text-[11.5px] text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11.5px] text-muted-foreground">
             <button
               className="flex items-center gap-1.5 hover:text-foreground"
               onClick={() => setExpanded((v) => !v)}
