@@ -66,6 +66,26 @@ export function TopNav() {
   );
 }
 
+function MobileTabs() {
+  return (
+    <nav className="md:hidden border-t hairline overflow-x-auto">
+      <div className="flex items-center gap-1 px-3 py-1.5 min-w-max">
+        {tabs.map((t) => (
+          <Link
+            key={t.to}
+            to={t.to}
+            activeOptions={{ exact: t.exact }}
+            className="relative px-2.5 py-1 text-[12px] tracking-wide rounded-sm text-muted-foreground data-[status=active]:text-foreground data-[status=active]:bg-foreground/5 group"
+          >
+            {t.label}
+            <span className="absolute left-2 right-2 -bottom-[5px] h-px bg-amber opacity-0 group-data-[status=active]:opacity-100" />
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 function Ticker() {
   const line = chamberSignals.join("   ·   ");
   return (
