@@ -91,7 +91,7 @@ function Ticker() {
   return (
     <div className="border-t hairline overflow-hidden">
       <div className="flex whitespace-nowrap py-1.5 ticker font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="px-6">{line}   ·   {line}</span>
+        <span className="px-4 md:px-6">{line}   ·   {line}</span>
       </div>
     </div>
   );
