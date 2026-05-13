@@ -59,7 +59,7 @@ export function MemoryTimeline() {
       <section className="px-4 md:px-6 py-8 border-t hairline">
         <div className="mb-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Standing Doctrine</p>
-          <h2 className="font-serif text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
+          <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
         </div>
         <div className="panel rounded-md divide-y hairline">
           {treaties.map((t) => (
