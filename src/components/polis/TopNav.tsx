@@ -109,14 +109,14 @@ function ChamberAlertBar() {
   const Icon = tone.icon;
   return (
     <div className={`border-t hairline ${tone.bg}`}>
-      <div className="flex items-center gap-3 px-6 py-1.5 fade-in">
-        <span className={`inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] rounded-sm border ${tone.border} ${tone.color} px-1.5 py-0.5`}>
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-1.5 fade-in">
+        <span className={`shrink-0 inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] rounded-sm border ${tone.border} ${tone.color} px-1.5 py-0.5`}>
           <Icon className="h-3 w-3" /> {tone.tag}
         </span>
-        <span className={`font-serif text-[12.5px] ${tone.color}`}>{a.label}</span>
+        <span className={`font-serif text-[12.5px] ${tone.color} truncate`}>{a.label}</span>
         <span className="text-muted-foreground/40 hidden md:inline">·</span>
         <span className="hidden md:inline text-[12px] text-foreground/75 truncate">{a.body}</span>
-        <span className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
+        <span className="ml-auto hidden sm:inline font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
           Cycle 31 · live
         </span>
       </div>
