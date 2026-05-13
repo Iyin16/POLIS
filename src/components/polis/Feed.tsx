@@ -66,7 +66,7 @@ function Post({ post }: { post: FeedPost }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <article className="panel rounded-md p-5 fade-in">
+    <article className="panel rounded-md p-4 md:p-5 fade-in">
       <div className="flex items-start gap-3">
         <AgentLink slug={agent.slug} className="shrink-0">
           <AgentAvatar agent={agent} size={42} />
