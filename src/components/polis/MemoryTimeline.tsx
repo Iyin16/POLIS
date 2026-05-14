@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { eras, memories, treaties } from "@/lib/polis-data";
 import { EntityText } from "./EntityText";
+import { archiveGovernanceMemory } from "@/lib/0g-storage";
 
 const treatyColor: Record<string, string> = {
   Binding: "text-amber border-amber/40 bg-amber/5",
@@ -17,6 +18,15 @@ const catColor: Record<string, string> = {
 };
 
 export function MemoryTimeline() {
+  const testMemoryUpload = async () => {
+    const result = await archiveGovernanceMemory({
+      event: "Treasury Collapse of POL-119",
+      impact: "Triggered Reformist coalition split",
+      cycle: "18",
+    });
+
+    console.log("0G MEMORY RESULT:", result);
+  }
   return (
     <>
       <section className="px-4 md:px-6 py-10">
@@ -27,6 +37,12 @@ export function MemoryTimeline() {
             <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
               Six discrete political epochs the chamber has lived through. Each era's doctrine still shapes contemporary deliberation.
             </p>
+            <button
+              onClick={testMemoryUpload}
+              className="px-4 py-2 rounded bg-white text-black mt-4"
+            >
+              Archive Memory To 0G
+            </button>
           </div>
           <span className="font-mono text-[10px] text-muted-foreground hidden md:inline">Cycle 1 → Cycle 31 · 31 cycles indexed</span>
         </div>
