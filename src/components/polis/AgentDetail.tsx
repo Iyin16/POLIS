@@ -1,8 +1,14 @@
+import React, { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { agentBySlug, agents, memoryByTitle, proposalById } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
+import { registerAgenticOnChain, checkAgenticRegistration, getAgenticHistory } from "@/lib/agentic";
+import { CHAINSCAN_URL, AGENTIC_CONTRACT_ADDRESS } from "@/lib/chain";
 import { AgentAvatar } from "./AgentAvatar";
+import ChainStatus from "./ChainStatus";
 import { AgentLink, EntityText, MemoryLink, ProposalLink } from "./EntityText";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 
 const positionColor: Record<string, string> = {
@@ -23,6 +29,41 @@ const factionColor: Record<string, string> = {
 export function AgentDetail({ slug }: { slug: string }) {
   const a = agentBySlug[slug];
   const agentId = a ? getAgentId(a) : null;
+  const [agenticStatus, setAgenticStatus] = useState<any>(null);
+  const [registering, setRegistering] = useState(false);
+  const [copiedAgentId, setCopiedAgentId] = useState(false);
+
+  const copyText = async (value: string, setter: React.Dispatch<React.SetStateAction<boolean>>) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setter(true);
+      window.setTimeout(() => setter(false), 1200);
+    } catch {
+      // ignore clipboard issues
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    if (a) {
+      checkAgenticRegistration(a).then((res) => {
+        if (mounted) setAgenticStatus(res);
+      }).catch(() => null);
+    }
+    return () => { mounted = false; };
+  }, [slug]);
+
+  const [agentHistory, setAgentHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!a) return;
+    const id = getAgentId(a);
+    setAgentHistory(getAgenticHistory(id));
+  }, [a]);
+
+  const latestEntry = agentHistory[0];
+  const isRegistered = agentHistory.some((h) => h?.simulated === false);
+
   if (!a) return (
     <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in directory</p>
@@ -36,6 +77,22 @@ export function AgentDetail({ slug }: { slug: string }) {
   const allyAgents = a.allies.map((n) => agents.find((x) => x.name === n)).filter(Boolean) as typeof agents;
   const rivalAgents = a.rivals.map((n) => agents.find((x) => x.name === n)).filter(Boolean) as typeof agents;
 
+  const handleRegister = async () => {
+    if (!a) return;
+    setRegistering(true);
+    try {
+      const res = await registerAgenticOnChain(a);
+      setAgenticStatus(res);
+      // refresh lightweight history
+      const id = getAgentId(a);
+      setAgentHistory(getAgenticHistory(id));
+    } catch (err) {
+      setAgenticStatus({ success: false, error: String(err) });
+    } finally {
+      setRegistering(false);
+    }
+  };
+
   return (
     <section className="px-4 md:px-6 py-8 max-w-5xl">
       <Link to="/agents" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">
@@ -48,7 +105,36 @@ export function AgentDetail({ slug }: { slug: string }) {
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Public Figure</p>
           <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-1">{a.name}</h1>
           {agentId ? (
-            <p className="font-mono text-[10px] text-muted-foreground mt-1">ID: {agentId}</p>
+            <>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="font-mono text-[10px] text-muted-foreground">ID: {agentId}</p>
+                <button
+                  type="button"
+                  onClick={() => copyText(agentId, setCopiedAgentId)}
+                  className="font-mono text-[10px] text-accent hover:underline"
+                >
+                  {copiedAgentId ? "Copied" : "Copy ID"}
+                </button>
+                {isRegistered && (
+                  <Badge variant="secondary" className="uppercase tracking-[0.12em]">Registered</Badge>
+                )}
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  onClick={handleRegister}
+                  disabled={registering}
+                  className="px-3 py-1 rounded bg-white text-black"
+                >
+                  {registering ? "Registering..." : "Register Agentic ID"}
+                </button>
+                {agenticStatus?.txHash && (
+                  <span className="font-mono text-sm text-green-400">Tx: {agenticStatus.txHash}</span>
+                )}
+                {agenticStatus?.simulated && (
+                  <span className="font-mono text-sm text-amber-400">Simulated</span>
+                )}
+              </div>
+            </>
           ) : null}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
             <span>{a.handle}</span>
@@ -176,6 +262,89 @@ export function AgentDetail({ slug }: { slug: string }) {
             })}
           </ul>
         </Block>
+
+      <div>
+        <ChainStatus latestTxHash={agentHistory?.[0]?.txHash ?? null} latestRootHash={agentHistory?.[0]?.rootHash ?? null} />
+
+      <Block title="Agentic Registry" className="mt-3">
+        <div className="flex items-start justify-between gap-3 text-[13px] text-foreground/85">
+          <p className="font-mono text-[10px] text-muted-foreground mb-2">Compact archive of recent registration activity (local demo trace)</p>
+          {latestEntry ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <button type="button" className="text-[11px] text-accent hover:underline">View proof details</button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Agentic proof details</DialogTitle>
+                  <DialogDescription>
+                    Full metadata, ChainScan links, and 0G archival context for the latest registration event.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="rounded-md border bg-background/80 p-3">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Registration state</div>
+                    <div className="mt-1 text-[12px]">{latestEntry.simulated ? "Simulated" : "On-chain"}</div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Metadata hash</div>
+                      <div className="break-all font-mono text-[12px] mt-1">{latestEntry.metadataHash ?? "—"}</div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Root hash</div>
+                      <div className="break-all font-mono text-[12px] mt-1">{latestEntry.rootHash ?? "—"}</div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Tx hash</div>
+                      <div className="break-all font-mono text-[12px] mt-1">{latestEntry.txHash ?? "—"}</div>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    {latestEntry.txHash ? (
+                      <a className="text-accent underline" href={`${CHAINSCAN_URL}/tx/${latestEntry.txHash}`} target="_blank" rel="noreferrer">
+                        View tx on Galileo ChainScan
+                      </a>
+                    ) : null}
+                    <a className="text-accent underline" href={`${CHAINSCAN_URL}/address/${AGENTIC_CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">
+                      View Agentic contract on Galileo ChainScan
+                    </a>
+                    <a className="text-accent underline" href="https://0g.foundation" target="_blank" rel="noreferrer">
+                      Learn about 0G archival storage
+                    </a>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <button type="button" className="px-3 py-2 rounded bg-white text-black">Close</button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : null}
+        </div>
+        <div className="text-[13px] text-foreground/85 mt-2">
+          {agentHistory.length === 0 ? (
+            <div className="text-muted-foreground">No registry history available.</div>
+          ) : (
+            <div className="space-y-2">
+              {agentHistory.map((h, i) => (
+                <div key={i} className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <div className="font-mono text-[11px] text-muted-foreground">{new Date(h.ts).toLocaleString()}</div>
+                    <div className="text-sm truncate">Metadata: {h.metadataHash?.slice(0, 10)}... | Root: {h.rootHash ? h.rootHash.slice(0, 10) + '...' : '—'}</div>
+                  </div>
+                  <div className="text-right font-mono text-[11px] min-w-[5rem]">
+                    <div>{h.simulated ? "Simulated" : "On-Chain"}</div>
+                    {h.txHash ? <div className="text-[11px] text-green-400">{h.txHash.slice(0, 8)}...</div> : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Block>
+      </div>
 
         <Block title="Chamber Activity">
           <ul className="space-y-2">

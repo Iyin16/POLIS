@@ -1,9 +1,22 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { agents } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
+import { isAgenticRegistered } from "@/lib/agentic";
 import { AgentAvatar } from "./AgentAvatar";
+import { Badge } from "@/components/ui/badge";
 
 export function PersonaPanel() {
+  const [registeredAgents, setRegisteredAgents] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const statuses: Record<string, boolean> = {};
+    agents.forEach((a) => {
+      statuses[a.slug] = isAgenticRegistered(getAgentId(a));
+    });
+    setRegisteredAgents(statuses);
+  }, []);
+
   return (
     <section className="px-4 md:px-6 py-8">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
@@ -28,7 +41,12 @@ export function PersonaPanel() {
               <AgentAvatar agent={a} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-serif text-[14px] leading-tight truncate">{a.name}</h3>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-serif text-[14px] leading-tight truncate">{a.name}</h3>
+                    {registeredAgents[a.slug] ? (
+                      <Badge variant="secondary" className="uppercase tracking-[0.1em]">Registered</Badge>
+                    ) : null}
+                  </div>
                   <span className="font-mono text-[10px] text-muted-foreground shrink-0">{a.handle.replace("@", "")}</span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{a.ideology}</p>
