@@ -26,11 +26,11 @@ export async function archiveGovernanceMemory(memory: any) {
 
     const memoryString = JSON.stringify(memory);
 
-const file = new MemData(
+    const file = new MemData(
       new TextEncoder().encode(memoryString)
     );
 
-    const [rootHash, uploadErr] = await indexer.upload(
+    const [uploadResult, uploadErr] = await indexer.upload(
       file,
       RPC_URL,
       signer
@@ -39,6 +39,14 @@ const file = new MemData(
     if (uploadErr) {
       throw uploadErr;
     }
+
+    const rootHash = uploadResult
+      ? "rootHash" in uploadResult
+        ? uploadResult.rootHash
+        : Array.isArray(uploadResult.rootHashes)
+        ? uploadResult.rootHashes[0]
+        : null
+      : null;
 
     console.log("0G ROOT HASH:", rootHash);
 

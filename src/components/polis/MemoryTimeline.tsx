@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { eras, memories, treaties } from "@/lib/polis-data";
 import { EntityText } from "./EntityText";
@@ -18,6 +19,8 @@ const catColor: Record<string, string> = {
 };
 
 export function MemoryTimeline() {
+  const [lastHash, setLastHash] = useState<string | null>(null);
+
   const testMemoryUpload = async () => {
     const result = await archiveGovernanceMemory({
       event: "Treasury Collapse of POL-119",
@@ -26,7 +29,9 @@ export function MemoryTimeline() {
     });
 
     console.log("0G MEMORY RESULT:", result);
-  }
+    setLastHash(result.rootHash ?? null);
+  };
+
   return (
     <>
       <section className="px-4 md:px-6 py-10">
@@ -43,6 +48,11 @@ export function MemoryTimeline() {
             >
               Archive Memory To 0G
             </button>
+            {lastHash && (
+              <div className="mt-4 text-sm text-green-400">
+                Last 0G Root Hash: {lastHash}
+              </div>
+            )}
           </div>
           <span className="font-mono text-[10px] text-muted-foreground hidden md:inline">Cycle 1 → Cycle 31 · 31 cycles indexed</span>
         </div>
