@@ -1,4 +1,4 @@
-import { Indexer } from "@0gfoundation/0g-storage-ts-sdk/browser";
+import { Indexer, MemData } from "@0gfoundation/0g-storage-ts-sdk";
 import { BrowserProvider } from "ethers";
 
 declare global {
@@ -26,10 +26,12 @@ export async function archiveGovernanceMemory(memory: any) {
 
     const memoryString = JSON.stringify(memory);
 
-    const blob = new Blob([new TextEncoder().encode(memoryString)], { type: "application/json" });
+const file = new MemData(
+      new TextEncoder().encode(memoryString)
+    );
 
     const [rootHash, uploadErr] = await indexer.upload(
-      blob as any,
+      file,
       RPC_URL,
       signer
     );
