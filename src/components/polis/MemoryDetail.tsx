@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { agentById, memoryBySlug } from "@/lib/polis-data";
+import { getAgentId } from "@/lib/agent-id";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText } from "./EntityText";
 import { ArrowLeft } from "lucide-react";

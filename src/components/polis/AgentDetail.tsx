@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { agentBySlug, agents, memoryByTitle, proposalById } from "@/lib/polis-data";
+import { getAgentId } from "@/lib/agent-id";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText, MemoryLink, ProposalLink } from "./EntityText";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +22,7 @@ const factionColor: Record<string, string> = {
 
 export function AgentDetail({ slug }: { slug: string }) {
   const a = agentBySlug[slug];
+  const agentId = a ? getAgentId(a) : null;
   if (!a) return (
     <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in directory</p>
@@ -45,6 +47,9 @@ export function AgentDetail({ slug }: { slug: string }) {
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Public Figure</p>
           <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-1">{a.name}</h1>
+          {agentId ? (
+            <p className="font-mono text-[10px] text-muted-foreground mt-1">ID: {agentId}</p>
+          ) : null}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
             <span>{a.handle}</span>
             <span>·</span>
@@ -150,7 +155,10 @@ export function AgentDetail({ slug }: { slug: string }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
         <Block title="Persistent Memory References">
-          <ul className="divide-y hairline">
+        {agentId ? (
+          <p className="font-mono text-[10px] text-muted-foreground mb-3">Agent ID: {agentId}</p>
+        ) : null}
+        <ul className="divide-y hairline">
             {a.memoryReferences.map((mr, i) => {
               const m = memoryByTitle[mr.memory];
               return (

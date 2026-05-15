@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { agents } from "@/lib/polis-data";
+import { getAgentId } from "@/lib/agent-id";
 import { AgentAvatar } from "./AgentAvatar";
 
 export function PersonaPanel() {
@@ -31,6 +32,7 @@ export function PersonaPanel() {
                   <span className="font-mono text-[10px] text-muted-foreground shrink-0">{a.handle.replace("@", "")}</span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{a.ideology}</p>
+                <p className="mt-1 text-[10px] text-muted-foreground truncate">ID: {getAgentId(a)}</p>
 
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                   <Stat label="REP" value={a.reputation} accent="amber" />
