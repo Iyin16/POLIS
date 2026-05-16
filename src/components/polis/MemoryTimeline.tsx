@@ -20,17 +20,30 @@ const catColor: Record<string, string> = {
 };
 
 export function MemoryTimeline() {
-  const [lastHash, setLastHash] = useState<string | null>(null);
+  const [memoryArchiveState, setMemoryArchiveState] = useState<Record<string, { archived: boolean; rootHash?: string; loading?: boolean }>>(
+    () => Object.fromEntries(memories.map((memory) => [memory.slug, { archived: memory.archivedOn0g ?? false, rootHash: undefined, loading: false }]))
+  );
 
-  const testMemoryUpload = async () => {
+  const archiveMemory = async (memorySlug: string, eventTitle: string, cycle: string) => {
+    setMemoryArchiveState((prev) => ({
+      ...prev,
+      [memorySlug]: { ...(prev[memorySlug] ?? {}), loading: true },
+    }));
+
     const result = await archiveGovernanceMemory({
-      event: "Treasury Collapse of POL-119",
-      impact: "Triggered Reformist coalition split",
-      cycle: "18",
+      event: eventTitle,
+      impact: `Preserved the institutional narrative for cycle ${cycle}`,
+      cycle,
     });
 
-    console.log("0G MEMORY RESULT:", result);
-    setLastHash(result.rootHash ?? null);
+    setMemoryArchiveState((prev) => ({
+      ...prev,
+      [memorySlug]: {
+        archived: true,
+        rootHash: result.rootHash ?? undefined,
+        loading: false,
+      },
+    }));
   };
 
   return (
@@ -43,17 +56,6 @@ export function MemoryTimeline() {
             <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
               Six discrete political epochs the chamber has lived through. Each era's doctrine still shapes contemporary deliberation.
             </p>
-            <button
-              onClick={testMemoryUpload}
-              className="px-4 py-2 rounded bg-white text-black mt-4"
-            >
-              Archive Memory To 0G
-            </button>
-            {lastHash && (
-              <div className="mt-4 text-sm text-green-400">
-                Last 0G Root Hash: {lastHash}
-              </div>
-            )}
           </div>
           <span className="font-mono text-[10px] text-muted-foreground hidden md:inline">Cycle 1 → Cycle 31 · 31 cycles indexed</span>
         </div>
@@ -165,37 +167,53 @@ export function MemoryTimeline() {
       <div className="relative">
         <div className="absolute left-0 right-0 top-[42px] h-px bg-[color-mix(in_oklab,var(--silver)_12%,transparent)]" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {memories.map((m, i) => (
-            <article key={m.id} className="relative">
-              <Link to="/memory/$slug" params={{ slug: m.slug }} className="block group">
-                <div className="flex items-center gap-2 h-[42px]">
-                  <span className="font-mono text-[10px] text-muted-foreground">{m.cycle}</span>
-                  <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
-                    {m.category}
-                  </span>
-                </div>
-                <div className="relative">
-                  <span className={`absolute -top-[7px] left-0 h-2 w-2 rounded-full ${i % 2 ? "bg-cyan" : "bg-amber"}`} />
-                  <div className="panel rounded-md p-3.5 mt-1 group-hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors">
-                    <h3 className="font-serif text-[14px] leading-snug">{m.title}</h3>
-                    <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{m.date}</p>
-                    <p className="text-[12px] text-foreground/75 mt-2 leading-relaxed line-clamp-4">{m.summary}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {m.archivedOn0g ? <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Archived on 0G</Badge> : null}
-                      {m.galileoVerified ? <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Salience</span>
-                      <span className="font-mono text-[10px] text-amber">{m.weight}</span>
-                    </div>
-                    <div className="mt-1 h-0.5 w-full bg-foreground/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber" style={{ width: `${m.weight}%` }} />
+          {memories.map((m, i) => {
+            const state = memoryArchiveState[m.slug] ?? { archived: m.archivedOn0g ?? false, rootHash: undefined, loading: false };
+            return (
+              <article key={m.id} className="relative">
+                <Link to="/memory/$slug" params={{ slug: m.slug }} className="block group cursor-pointer">
+                  <div className="flex items-center gap-2 h-[42px]">
+                    <span className="font-mono text-[10px] text-muted-foreground">{m.cycle}</span>
+                    <span className={`ml-auto rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
+                      {m.category}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className={`absolute -top-[7px] left-0 h-2 w-2 rounded-full ${i % 2 ? "bg-cyan" : "bg-amber"}`} />
+                    <div className="panel rounded-md p-3.5 mt-1 group-hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors">
+                      <h3 className="font-serif text-[14px] leading-snug">{m.title}</h3>
+                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{m.date}</p>
+                      <p className="text-[12px] text-foreground/75 mt-2 leading-relaxed line-clamp-4">{m.summary}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {state.archived ? (
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Archived on 0G</Badge>
+                        ) : null}
+                        {m.galileoVerified ? <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Salience</span>
+                        <span className="font-mono text-[10px] text-amber">{m.weight}</span>
+                      </div>
+                      <div className="mt-1 h-0.5 w-full bg-foreground/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber" style={{ width: `${m.weight}%` }} />
+                      </div>
                     </div>
                   </div>
+                </Link>
+                <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
+                  <span className="text-muted-foreground">{state.rootHash ? `0G root: ${state.rootHash}` : "Preserve this event in permanent memory."}</span>
+                  <button
+                    type="button"
+                    disabled={state.archived || state.loading}
+                    onClick={() => archiveMemory(m.slug, m.title, m.cycle)}
+                    className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-amber transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {state.archived ? "Archived" : state.loading ? "Preserving…" : "Archive Governance Event"}
+                  </button>
                 </div>
-              </Link>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </div>
       </section>

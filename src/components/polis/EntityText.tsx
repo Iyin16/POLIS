@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { Fragment, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import { agents, memories } from "@/lib/polis-data";
 
 type Token = { type: "text" | "agent" | "proposal" | "memory"; value: string; slug?: string };
@@ -72,7 +72,7 @@ export function EntityText({ children, className }: { children: string; classNam
           <Link
             key={i}
             to="/agents/$slug"
-              params={{ slug: t.slug! }}
+            params={{ slug: t.slug! }}
             className="text-foreground underline-offset-2 decoration-foreground/20 hover:underline"
           >
             {t.value}

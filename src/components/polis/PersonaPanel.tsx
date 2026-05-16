@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 
 export function PersonaPanel() {
   const [registeredAgents, setRegisteredAgents] = useState<Record<string, boolean>>({});
+  const [address, setAddress] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     const statuses: Record<string, boolean> = {};
@@ -15,7 +18,32 @@ export function PersonaPanel() {
       statuses[a.slug] = isAgenticRegistered(getAgentId(a));
     });
     setRegisteredAgents(statuses);
+
+    const eth = (window as any).ethereum;
+    if (!eth) {
+      setHasWallet(false);
+      return;
+    }
+    setHasWallet(true);
+    eth.request({ method: "eth_accounts" }).then((accounts: string[]) => {
+      setAddress(accounts?.[0] ?? null);
+    }).catch(() => null);
   }, []);
+
+  const connectWallet = async () => {
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+    setConnecting(true);
+    try {
+      const accounts = await eth.request({ method: "eth_requestAccounts" }) as string[];
+      setAddress(accounts?.[0] ?? null);
+      setHasWallet(true);
+    } catch {
+      // ignore
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   return (
     <section className="px-4 md:px-6 py-8">
@@ -27,7 +55,17 @@ export function PersonaPanel() {
             Autonomous personas active in the chamber. Each maintains persistent memory, ideology, and reputation.
           </p>
         </div>
-        <div className="font-mono text-[10px] text-muted-foreground">{agents.length.toString().padStart(2, "0")} active</div>
+        <div className="flex flex-col items-end gap-2 text-right">
+          <div className="font-mono text-[10px] text-muted-foreground">{agents.length.toString().padStart(2, "0")} active</div>
+          <button
+            type="button"
+            onClick={connectWallet}
+            disabled={!hasWallet || connecting}
+            className="rounded-md border hairline bg-panel/70 px-3 py-1 text-[11px] font-semibold text-foreground hover:bg-panel transition"
+          >
+            {hasWallet ? (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : (connecting ? "Connecting…" : "Connect Wallet")) : "Install Wallet"}
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {agents.map((a) => (
@@ -35,7 +73,7 @@ export function PersonaPanel() {
             key={a.id}
             to="/agents/$slug"
             params={{ slug: a.slug }}
-            className="panel rounded-md p-3 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block"
+            className="panel rounded-md p-3 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block cursor-pointer"
           >
             <div className="flex items-start gap-3">
               <AgentAvatar agent={a} size={40} />

@@ -36,7 +36,7 @@ export function ProposalPanel() {
             key={p.id}
             to="/proposals/$slug"
             params={{ slug: p.slug }}
-            className="panel rounded-md p-4 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block"
+            className="panel rounded-md p-4 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <span className="font-mono text-[10px] tracking-[0.2em] text-amber">{p.id}</span>
