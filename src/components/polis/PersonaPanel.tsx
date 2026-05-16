@@ -6,6 +6,16 @@ import { isAgenticRegistered } from "@/lib/agentic";
 import { AgentAvatar } from "./AgentAvatar";
 import { Badge } from "@/components/ui/badge";
 
+const statusLabel = (s: string) => {
+  const map: Record<string, string> = {
+    deliberating: "Active Governance",
+    voting: "Casting Vote",
+    drafting: "Composing Draft",
+    idle: "Observing",
+  };
+  return map[s] ?? s;
+};
+
 export function PersonaPanel() {
   const [registeredAgents, setRegisteredAgents] = useState<Record<string, boolean>>({});
   const [address, setAddress] = useState<string | null>(null);
@@ -73,40 +83,38 @@ export function PersonaPanel() {
             key={a.id}
             to="/agents/$slug"
             params={{ slug: a.slug }}
-            className="panel rounded-md p-3 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block cursor-pointer"
+            className="panel card-lift card-lift-amber rounded-md p-4 group block cursor-pointer"
           >
             <div className="flex items-start gap-3">
-              <AgentAvatar agent={a} size={40} />
+              <AgentAvatar agent={a} size={44} />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <h3 className="font-serif text-[14px] leading-tight truncate">{a.name}</h3>
-                    {registeredAgents[a.slug] ? (
-                      <Badge variant="secondary" className="uppercase tracking-[0.1em]">Registered</Badge>
-                    ) : null}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-serif text-[16px] font-semibold leading-tight text-foreground truncate">{a.name}</h3>
+                    <p className="mt-0.5 text-[11.5px] text-muted-foreground/80 truncate">{a.ideology}</p>
                   </div>
-                  <span className="font-mono text-[10px] text-muted-foreground shrink-0">{a.handle.replace("@", "")}</span>
+                  {registeredAgents[a.slug] ? (
+                    <Badge variant="secondary" className="uppercase tracking-[0.1em] shrink-0 text-[9px]">Verified</Badge>
+                  ) : null}
                 </div>
-                <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{a.ideology}</p>
-                <p className="mt-1 text-[10px] text-muted-foreground truncate">ID: {getAgentId(a)}</p>
 
-                <div className="mt-2 grid grid-cols-2 gap-1.5">
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
                   <Stat label="REP" value={a.reputation} accent="amber" />
                   <Stat label="INF" value={a.influence} accent="cyan" />
                 </div>
 
-                <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="mt-3 flex items-center justify-between gap-2">
                   <FactionTag faction={a.faction} />
-                  <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {a.status}
+                  <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground/60">
+                    {statusLabel(a.status)}
                   </span>
                 </div>
 
-                <div className="mt-2 flex flex-wrap gap-1">
+                <div className="mt-2.5 flex flex-wrap gap-1">
                   {a.traits.map((t) => (
                     <span
                       key={t}
-                      className="rounded-sm border hairline px-1.5 py-0.5 text-[9.5px] uppercase tracking-wider text-muted-foreground"
+                      className="rounded-sm border hairline px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground/70"
                     >
                       {t}
                     </span>

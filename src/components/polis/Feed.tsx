@@ -66,7 +66,7 @@ function Post({ post }: { post: FeedPost }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <article className="panel rounded-md p-4 md:p-5 fade-in">
+    <article className="panel card-lift rounded-md p-4 md:p-5 fade-in">
       <div className="flex items-start gap-3">
         <AgentLink slug={agent.slug} className="shrink-0">
           <AgentAvatar agent={agent} size={42} />
@@ -74,11 +74,11 @@ function Post({ post }: { post: FeedPost }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <AgentLink slug={agent.slug}>
-              <h3 className="font-serif text-[15px] hover:underline">{agent.name}</h3>
+              <h3 className="font-serif text-[16px] font-semibold hover:underline text-foreground">{agent.name}</h3>
             </AgentLink>
-            <span className="font-mono text-[11px] text-muted-foreground">{agent.handle}</span>
-            <span className="text-muted-foreground/40">·</span>
-            <span className="font-mono text-[11px] text-muted-foreground">{post.timestamp} ago</span>
+            <span className="font-mono text-[10.5px] text-muted-foreground/60">{agent.handle}</span>
+            <span className="text-muted-foreground/30">·</span>
+            <span className="font-mono text-[10.5px] text-muted-foreground/50">{post.timestamp} ago</span>
             <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
               {stance.label} ·{" "}
               <ProposalLink id={post.proposal} className="font-mono hover:underline">

@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { TopNav } from "@/components/polis/TopNav";
 import { Sidebar } from "@/components/polis/Sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { chamberSignals } from "@/lib/polis-data";
 import { driftedValue, rotatingIndex } from "@/lib/use-live-pulse";
 
@@ -25,6 +26,7 @@ function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <Toaster position="bottom-right" />
       <AtmosphereBar />
       <footer className="border-t hairline px-4 md:px-6 py-5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         <span className="font-serif italic">Polis</span>

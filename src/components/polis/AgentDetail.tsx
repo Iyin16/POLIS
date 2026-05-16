@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { agentBySlug, agents, memoryByTitle, proposalById } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
 import { registerAgenticOnChain, checkAgenticRegistration, getAgenticHistory } from "@/lib/agentic";
@@ -110,11 +111,16 @@ export function AgentDetail({ slug }: { slug: string }) {
     try {
       const res = await registerAgenticOnChain(a);
       setAgenticStatus(res);
-      // refresh lightweight history
       const id = getAgentId(a);
       setAgentHistory(getAgenticHistory(id));
+      toast.success("Memory anchored to 0G", {
+        description: `${a.name}'s governance identity is now chain-verified.`,
+      });
     } catch (err) {
       setAgenticStatus({ success: false, error: String(err) });
+      toast.error("Registration failed", {
+        description: "Could not anchor memory. Check wallet connection.",
+      });
     } finally {
       setRegistering(false);
     }
@@ -162,16 +168,16 @@ export function AgentDetail({ slug }: { slug: string }) {
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {isRegistered && (
-                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">ERC-7857 Registered</Badge>
+                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">Agent Sovereignty Active</Badge>
                   )}
                   {latestEntry?.rootHash && (
-                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge>
+                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Memory Anchored</Badge>
                   )}
                   {latestEntry?.txHash && !latestEntry?.simulated && (
-                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge>
+                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Chain Verified</Badge>
                   )}
                   {agenticStatus?.simulated && (
-                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">Simulated proof</Badge>
+                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">Local Simulation</Badge>
                   )}
                 </div>
 

@@ -30,23 +30,23 @@ export function ProposalPanel() {
         <div className="font-mono text-[10px] text-muted-foreground">{proposals.length} on record</div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {proposals.map((p) => (
           <Link
             key={p.id}
             to="/proposals/$slug"
             params={{ slug: p.slug }}
-            className="panel rounded-md p-4 hover:border-[color-mix(in_oklab,var(--silver)_22%,transparent)] transition-colors group block cursor-pointer"
+            className="panel card-lift card-lift-amber rounded-md p-5 group block cursor-pointer"
           >
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px] tracking-[0.2em] text-amber">{p.id}</span>
-              <span className={`rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${tagColor[p.statusTag]}`}>
+              <span className="font-mono text-[10px] tracking-[0.22em] text-amber/70">{p.id}</span>
+              <span className={`rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.16em] ${tagColor[p.statusTag]}`}>
                 {p.statusTag}
               </span>
             </div>
-            <h2 className="font-serif text-[16px] leading-snug mt-2">{p.title}</h2>
-            <p className="font-mono text-[10.5px] text-muted-foreground mt-1">{p.status}</p>
-            <p className="mt-3 text-[12.5px] text-foreground/75 leading-relaxed line-clamp-3">{p.summary}</p>
+            <h2 className="font-serif text-[18px] font-semibold leading-snug mt-2 text-foreground">{p.title}</h2>
+            <p className="font-mono text-[10px] text-muted-foreground/60 mt-1">{p.status}</p>
+            <p className="mt-3 text-[13px] text-foreground/70 leading-relaxed line-clamp-3">{p.summary}</p>
 
             <div className="mt-4 grid grid-cols-3 gap-2 text-[10.5px]">
               <Stat label="Endorse" value={`${p.votes.for}%`} accent="amber" />
@@ -55,14 +55,14 @@ export function ProposalPanel() {
             </div>
 
             <div className="mt-3 flex items-center justify-between font-mono text-[10px]">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="flex items-center gap-1.5 text-muted-foreground/70">
                 <ShieldAlert className={`h-3 w-3 ${riskColor[p.riskLevel]}`} />
                 Risk · <span className={riskColor[p.riskLevel]}>{p.riskLevel}</span>
               </span>
               <span className="flex items-center gap-1 text-amber">
                 <TrendingUp className="h-3 w-3" /> {p.sentimentDelta}
               </span>
-              <span className="flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
+              <span className="flex items-center gap-1 text-muted-foreground/60 group-hover:text-foreground transition-colors">
                 Open <ArrowUpRight className="h-3 w-3" />
               </span>
             </div>
