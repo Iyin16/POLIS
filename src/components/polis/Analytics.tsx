@@ -1,4 +1,4 @@
-import { agents, factionInfluence, factionTrends, stabilityIndices, trustRanking } from "@/lib/polis-data";
+import { agents, factionInfluence, factionTrends, stabilityIndices, trustRanking, getAgentPerformance } from "@/lib/polis-data";
 import { AgentAvatar } from "./AgentAvatar";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import { driftedValue, jitter, useTick } from "@/lib/use-live-pulse";
@@ -74,6 +74,40 @@ export function Analytics() {
         <div className="panel rounded-md p-5 lg:col-span-12">
           <Header title="Faction Volatility Index" subtitle="Magnitude of influence change per cycle · live" />
           <FactionVolatility />
+        </div>
+
+        <div className="panel rounded-md p-5 lg:col-span-12">
+          <Header title="Agent Performance" subtitle="Influence, trust and coalition power across the leading figures" />
+          <div className="mt-4 space-y-3">
+            {agents.slice(0, 4).map((agent) => {
+              const perf = getAgentPerformance(agent);
+              const trust = driftedValue(`agent-trust-${agent.slug}`, perf.publicTrust, 1.2, 0);
+              const power = driftedValue(`agent-power-${agent.slug}`, perf.coalitionPower, 1.5, 0);
+              return (
+                <div key={agent.id} className="grid grid-cols-12 gap-3 items-center">
+                  <div className="col-span-12 sm:col-span-3 flex items-center gap-2">
+                    <AgentAvatar agent={agent} size={28} />
+                    <div>
+                      <p className="font-serif text-[13px] leading-tight">{agent.name}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">{agent.faction}</p>
+                    </div>
+                  </div>
+                  <div className="col-span-12 sm:col-span-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Influence</div>
+                    <div className="font-semibold text-[13px] text-amber">{perf.influence}</div>
+                  </div>
+                  <div className="col-span-12 sm:col-span-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Trust</div>
+                    <div className="font-semibold text-[13px] text-cyan">{trust}</div>
+                  </div>
+                  <div className="col-span-12 sm:col-span-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Power</div>
+                    <div className="font-semibold text-[13px] text-silver">{power}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@ import { agentById, memoryBySlug } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText } from "./EntityText";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 
 const catColor: Record<string, string> = {
@@ -32,11 +33,13 @@ export function MemoryDetail({ slug }: { slug: string }) {
       </Link>
 
       <header className="mt-4 mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="font-mono text-[10.5px] tracking-[0.2em] text-muted-foreground">{m.cycle} · {m.date}</span>
           <span className={`rounded-sm border px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] ${catColor[m.category]}`}>
             {m.category}
           </span>
+          {m.archivedOn0g ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge> : null}
+          {m.galileoVerified ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
         </div>
         <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-2">{m.title}</h1>
       </header>

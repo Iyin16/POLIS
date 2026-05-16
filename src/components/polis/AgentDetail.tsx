@@ -9,6 +9,7 @@ import ChainStatus from "./ChainStatus";
 import { AgentLink, EntityText, MemoryLink, ProposalLink } from "./EntityText";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { driftedValue } from "@/lib/use-live-pulse";
 import { ArrowLeft } from "lucide-react";
 
 const positionColor: Record<string, string> = {
@@ -64,6 +65,32 @@ export function AgentDetail({ slug }: { slug: string }) {
   const latestEntry = agentHistory[0];
   const isRegistered = agentHistory.some((h) => h?.simulated === false);
 
+  const stability = driftedValue(
+    `${slug}-stability`,
+    Math.min(
+      96,
+      Math.max(
+        44,
+        (a?.reputation ?? 60) + ((a?.memoryReferences.length ?? 0) * 2) - ((a?.influence ?? 60) * 0.06),
+      ),
+    ),
+    1.4,
+    0,
+  );
+  const coalitionPower = Math.min(
+    98,
+    Math.round((a?.influence ?? 60) + ((a?.coalitions.length ?? 0) * 6) + ((a?.allies.length ?? 0) * 4) + ((a?.reputation ?? 60) * 0.08)),
+  );
+  const publicTrust = driftedValue(
+    `${slug}-trust`,
+    Math.min(
+      98,
+      Math.max(42, (a?.reputation ?? 60) * 0.92 + ((a?.memoryReferences.length ?? 0) * 2.5)),
+    ),
+    1.6,
+    0,
+  );
+
   if (!a) return (
     <section className="px-4 md:px-6 py-12 max-w-2xl">
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-crimson">Not in directory</p>
@@ -115,9 +142,47 @@ export function AgentDetail({ slug }: { slug: string }) {
                 >
                   {copiedAgentId ? "Copied" : "Copy ID"}
                 </button>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {isRegistered && (
-                  <Badge variant="secondary" className="uppercase tracking-[0.12em]">Registered</Badge>
+                  <Badge variant="secondary" className="uppercase tracking-[0.12em]">ERC-7857 Registered</Badge>
                 )}
+                {latestEntry?.rootHash && (
+                  <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge>
+                )}
+                {latestEntry?.txHash && !latestEntry?.simulated && (
+                  <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge>
+                )}
+              </div>
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-xl">
+                <div className="rounded-sm border hairline bg-background/40 p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Influence</div>
+                  <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{a.influence}</div>
+                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber" style={{ width: `${a.influence}%` }} />
+                  </div>
+                </div>
+                <div className="rounded-sm border hairline bg-background/40 p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Stability</div>
+                  <div className="font-serif text-[20px] text-cyan mt-1 tabular-nums">{stability}</div>
+                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-cyan" style={{ width: `${stability}%` }} />
+                  </div>
+                </div>
+                <div className="rounded-sm border hairline bg-background/40 p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Coalition Power</div>
+                  <div className="font-serif text-[20px] text-silver mt-1 tabular-nums">{coalitionPower}</div>
+                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-silver" style={{ width: `${coalitionPower}%` }} />
+                  </div>
+                </div>
+                <div className="rounded-sm border hairline bg-background/40 p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Public Trust</div>
+                  <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{publicTrust}</div>
+                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber" style={{ width: `${publicTrust}%` }} />
+                  </div>
+                </div>
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <button
@@ -329,14 +394,21 @@ export function AgentDetail({ slug }: { slug: string }) {
           ) : (
             <div className="space-y-2">
               {agentHistory.map((h, i) => (
-                <div key={i} className="flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0 pr-3">
-                    <div className="font-mono text-[11px] text-muted-foreground">{new Date(h.ts).toLocaleString()}</div>
-                    <div className="text-sm truncate">Metadata: {h.metadataHash?.slice(0, 10)}... | Root: {h.rootHash ? h.rootHash.slice(0, 10) + '...' : '—'}</div>
+                <div key={i} className="space-y-2 rounded-md border border-foreground/5 bg-background/80 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-mono text-[11px] text-muted-foreground">{new Date(h.ts).toLocaleString()}</div>
+                      <div className="text-sm truncate">Metadata: {h.metadataHash?.slice(0, 10)}... | Root: {h.rootHash ? h.rootHash.slice(0, 10) + '...' : '—'}</div>
+                    </div>
+                    <div className="text-right font-mono text-[11px] min-w-[5rem]">
+                      <div>{h.simulated ? "Simulated" : "On-Chain"}</div>
+                      {h.txHash ? <div className="text-[11px] text-green-400">{h.txHash.slice(0, 8)}...</div> : null}
+                    </div>
                   </div>
-                  <div className="text-right font-mono text-[11px] min-w-[5rem]">
-                    <div>{h.simulated ? "Simulated" : "On-Chain"}</div>
-                    {h.txHash ? <div className="text-[11px] text-green-400">{h.txHash.slice(0, 8)}...</div> : null}
+                  <div className="flex flex-wrap gap-2">
+                    {h.rootHash ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge> : null}
+                    {h.txHash && !h.simulated ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
+                    {h.simulated ? <Badge variant="secondary" className="uppercase tracking-[0.12em]">Simulated proof</Badge> : null}
                   </div>
                 </div>
               ))}

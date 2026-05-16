@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { eras, memories, treaties } from "@/lib/polis-data";
+import { eras, memories, treaties, replayEvents, agentById } from "@/lib/polis-data";
 import { EntityText } from "./EntityText";
+import { Badge } from "@/components/ui/badge";
 import { archiveGovernanceMemory } from "@/lib/0g-storage";
 
 const treatyColor: Record<string, string> = {
@@ -84,6 +85,47 @@ export function MemoryTimeline() {
 
       <section className="px-4 md:px-6 py-8 border-t hairline">
         <div className="mb-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Replay Mode</p>
+          <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Major Governance Replays</h2>
+          <p className="text-[12.5px] text-muted-foreground mt-1 max-w-xl">
+            Chronological moments from chamber memory, replayed as compact event fragments with agent reactions and infrastructure proof status.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {replayEvents.map((event) => (
+            <article key={event.id} className="panel rounded-md p-4 border hairline">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{event.cycle} · {event.date}</p>
+                  <h3 className="font-serif text-[16px] mt-2 leading-tight">{event.title}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {event.archivedOn0g ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge> : null}
+                  {event.galileoVerified ? <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
+                </div>
+              </div>
+              <p className="text-[12.5px] text-foreground/80 mt-3 leading-relaxed">{event.focus}</p>
+              <div className="mt-4 space-y-2 text-[12px]">
+                {event.keyAgents.map((person) => {
+                  const agent = agentById[person.agentId];
+                  return (
+                    <div key={person.agentId} className="flex gap-2 items-start">
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-amber shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-serif text-[13px] leading-tight">{agent?.name}</p>
+                        <p className="text-muted-foreground text-[11px]">{person.role}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 md:px-6 py-8 border-t hairline">
+        <div className="mb-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Standing Doctrine</p>
           <h2 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Treaties &amp; Constitutional Instruments</h2>
         </div>
@@ -138,6 +180,10 @@ export function MemoryTimeline() {
                     <h3 className="font-serif text-[14px] leading-snug">{m.title}</h3>
                     <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{m.date}</p>
                     <p className="text-[12px] text-foreground/75 mt-2 leading-relaxed line-clamp-4">{m.summary}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {m.archivedOn0g ? <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Archived on 0G</Badge> : null}
+                      {m.galileoVerified ? <Badge variant="outline" className="text-[10px] uppercase tracking-[0.12em]">Galileo Verified</Badge> : null}
+                    </div>
                     <div className="mt-3 flex items-center justify-between">
                       <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Salience</span>
                       <span className="font-mono text-[10px] text-amber">{m.weight}</span>

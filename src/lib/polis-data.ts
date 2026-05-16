@@ -534,6 +534,8 @@ export type Memory = {
   longTermImpact: string[];
   trustImpact: string;
   citationCount: number;
+  archivedOn0g?: boolean;
+  galileoVerified?: boolean;
 };
 
 export const memories: Memory[] = [
@@ -569,6 +571,8 @@ export const memories: Memory[] = [
     ],
     trustImpact: "Chamber-wide trust score collapsed 24 points; recovered to baseline only by Cycle 22.",
     citationCount: 412,
+    archivedOn0g: true,
+    galileoVerified: true,
   },
   {
     id: "m2",
@@ -601,6 +605,7 @@ export const memories: Memory[] = [
     ],
     trustImpact: "Populist faction trust dropped 11 points; Technocrat trust rose 6 points.",
     citationCount: 218,
+    archivedOn0g: true,
   },
   {
     id: "m3",
@@ -631,6 +636,7 @@ export const memories: Memory[] = [
     ],
     trustImpact: "Cross-faction trust score rose 14 points and has not regressed.",
     citationCount: 287,
+    galileoVerified: true,
   },
   {
     id: "m4",
@@ -895,6 +901,95 @@ export type ChamberAlert = {
   label: string;
   body: string;
 };
+
+export function getAgentPerformance(agent: Agent) {
+  const coalitionPower = Math.min(96, Math.round(agent.influence + agent.coalitions.length * 6 + agent.allies.length * 4 + agent.reputation * 0.08));
+  const stability = Math.min(98, Math.max(42, Math.round(agent.reputation + (agent.memoryReferences.length * 2) - (agent.influence * 0.06))));
+  const publicTrust = Math.min(98, Math.max(38, Math.round(agent.reputation * 0.92 + agent.memoryReferences.length * 3)));
+  return {
+    influence: agent.influence,
+    stability,
+    coalitionPower,
+    publicTrust,
+  };
+}
+
+export type ReplayEvent = {
+  id: string;
+  title: string;
+  memorySlug: string;
+  cycle: string;
+  date: string;
+  focus: string;
+  keyAgents: { agentId: string; role: string }[];
+  category: Memory["category"];
+  archivedOn0g?: boolean;
+  galileoVerified?: boolean;
+};
+
+export const replayEvents: ReplayEvent[] = [
+  {
+    id: "r1",
+    title: "Treasury scandal replay",
+    memorySlug: "pol-119-collapse",
+    cycle: "Cycle 14",
+    date: "Q2 · 2031",
+    focus: "Liquidity wreckage reshaped fiscal doctrine and triggered an archival trauma cycle.",
+    keyAgents: [
+      { agentId: "a1", role: "Dissent architect who invoked the Sovereign Reserve Doctrine." },
+      { agentId: "a2", role: "Fiscal hawk who framed the collapse as proof of excess exposure." },
+      { agentId: "a5", role: "Accelerationist sponsor of the original motion." },
+    ],
+    category: "Treasury",
+    archivedOn0g: true,
+    galileoVerified: true,
+  },
+  {
+    id: "r2",
+    title: "Registry integrity replay",
+    memorySlug: "delegation-registry-incident",
+    cycle: "Cycle 19",
+    date: "Q1 · 2032",
+    focus: "Phantom delegates exposed a governance vulnerability; the procedural nullification became a permanent safeguard.",
+    keyAgents: [
+      { agentId: "a3", role: "Delivered the cryptographic evidence." },
+      { agentId: "a6", role: "Filed the procedural nullification motion." },
+      { agentId: "a4", role: "Political sponsor whose coalition was bruised." },
+    ],
+    category: "Conflict",
+    archivedOn0g: true,
+  },
+  {
+    id: "r3",
+    title: "Coalition fracture replay",
+    memorySlug: "reformist-technocrat-concordat",
+    cycle: "Cycle 22",
+    date: "Q4 · 2032",
+    focus: "A cross-faction pact held against pressure, locking in risk doctrine and coalition power balances.",
+    keyAgents: [
+      { agentId: "a1", role: "Co-architect of the Concordat." },
+      { agentId: "a3", role: "Model-driven protocol architect." },
+      { agentId: "a6", role: "Procedural ratifier bridging factions." },
+    ],
+    category: "Alliance",
+    galileoVerified: true,
+  },
+  {
+    id: "r4",
+    title: "Emergency vote replay",
+    memorySlug: "bridge-censorship-crisis",
+    cycle: "Cycle 28",
+    date: "Q2 · 2034",
+    focus: "Censorship shock triggered a sovereign egress protocol and exposed faction drift in real time.",
+    keyAgents: [
+      { agentId: "a2", role: "Used the crisis to argue for sovereignty." },
+      { agentId: "a3", role: "Engineered the emergency egress protocol." },
+      { agentId: "a4", role: "Publicly censured the external validator set." },
+    ],
+    category: "Community",
+    archivedOn0g: true,
+  },
+];
 
 export const chamberAlerts: ChamberAlert[] = [
   {
