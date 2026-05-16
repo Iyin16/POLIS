@@ -15,6 +15,7 @@ import { Route as AppProposalsRouteImport } from './routes/_app.proposals'
 import { Route as AppMemoryRouteImport } from './routes/_app.memory'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
+import { Route as AppAgentsIndexRouteImport } from './routes/_app.agents.index'
 import { Route as AppProposalsSlugRouteImport } from './routes/_app.proposals.$slug'
 import { Route as AppMemorySlugRouteImport } from './routes/_app.memory.$slug'
 import { Route as AppAgentsSlugRouteImport } from './routes/_app.agents.$slug'
@@ -48,6 +49,11 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAgentsIndexRoute = AppAgentsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAgentsRoute,
+} as any)
 const AppProposalsSlugRoute = AppProposalsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -73,9 +79,9 @@ export interface FileRoutesByFullPath {
   '/agents/$slug': typeof AppAgentsSlugRoute
   '/memory/$slug': typeof AppMemorySlugRoute
   '/proposals/$slug': typeof AppProposalsSlugRoute
+  '/agents/': typeof AppAgentsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/agents': typeof AppAgentsRouteWithChildren
   '/analytics': typeof AppAnalyticsRoute
   '/memory': typeof AppMemoryRouteWithChildren
   '/proposals': typeof AppProposalsRouteWithChildren
@@ -83,6 +89,7 @@ export interface FileRoutesByTo {
   '/agents/$slug': typeof AppAgentsSlugRoute
   '/memory/$slug': typeof AppMemorySlugRoute
   '/proposals/$slug': typeof AppProposalsSlugRoute
+  '/agents': typeof AppAgentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +102,7 @@ export interface FileRoutesById {
   '/_app/agents/$slug': typeof AppAgentsSlugRoute
   '/_app/memory/$slug': typeof AppMemorySlugRoute
   '/_app/proposals/$slug': typeof AppProposalsSlugRoute
+  '/_app/agents/': typeof AppAgentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,9 +115,9 @@ export interface FileRouteTypes {
     | '/agents/$slug'
     | '/memory/$slug'
     | '/proposals/$slug'
+    | '/agents/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/agents'
     | '/analytics'
     | '/memory'
     | '/proposals'
@@ -117,6 +125,7 @@ export interface FileRouteTypes {
     | '/agents/$slug'
     | '/memory/$slug'
     | '/proposals/$slug'
+    | '/agents'
   id:
     | '__root__'
     | '/_app'
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/_app/agents/$slug'
     | '/_app/memory/$slug'
     | '/_app/proposals/$slug'
+    | '/_app/agents/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,6 +188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/agents/': {
+      id: '/_app/agents/'
+      path: '/'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof AppAgentsIndexRouteImport
+      parentRoute: typeof AppAgentsRoute
+    }
     '/_app/proposals/$slug': {
       id: '/_app/proposals/$slug'
       path: '/$slug'
@@ -204,10 +221,12 @@ declare module '@tanstack/react-router' {
 
 interface AppAgentsRouteChildren {
   AppAgentsSlugRoute: typeof AppAgentsSlugRoute
+  AppAgentsIndexRoute: typeof AppAgentsIndexRoute
 }
 
 const AppAgentsRouteChildren: AppAgentsRouteChildren = {
   AppAgentsSlugRoute: AppAgentsSlugRoute,
+  AppAgentsIndexRoute: AppAgentsIndexRoute,
 }
 
 const AppAgentsRouteWithChildren = AppAgentsRoute._addFileChildren(
