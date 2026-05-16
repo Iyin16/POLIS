@@ -143,61 +143,78 @@ export function AgentDetail({ slug }: { slug: string }) {
                   {copiedAgentId ? "Copied" : "Copy ID"}
                 </button>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {isRegistered && (
-                  <Badge variant="secondary" className="uppercase tracking-[0.12em]">ERC-7857 Registered</Badge>
-                )}
-                {latestEntry?.rootHash && (
-                  <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge>
-                )}
-                {latestEntry?.txHash && !latestEntry?.simulated && (
-                  <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge>
-                )}
-              </div>
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-xl">
-                <div className="rounded-sm border hairline bg-background/40 p-3">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Influence</div>
-                  <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{a.influence}</div>
-                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber" style={{ width: `${a.influence}%` }} />
+              <div className="mt-4 rounded-2xl border border-foreground/10 bg-surface/80 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Agentic identity</p>
+                    <p className="mt-2 text-[13px] text-foreground/80 max-w-2xl">
+                      Register this agent's deterministic Agentic ID on Galileo and archive proof to 0G for persistent governance provenance.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRegister}
+                    disabled={registering}
+                    className="rounded-md bg-amber px-4 py-2 text-[13px] font-semibold text-black hover:bg-amber/90 transition-colors"
+                  >
+                    {registering ? "Registering..." : isRegistered ? "Refresh Agentic ID" : "Register Agentic ID"}
+                  </button>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {isRegistered && (
+                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">ERC-7857 Registered</Badge>
+                  )}
+                  {latestEntry?.rootHash && (
+                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Archived on 0G</Badge>
+                  )}
+                  {latestEntry?.txHash && !latestEntry?.simulated && (
+                    <Badge variant="outline" className="uppercase tracking-[0.12em]">Galileo Verified</Badge>
+                  )}
+                  {agenticStatus?.simulated && (
+                    <Badge variant="secondary" className="uppercase tracking-[0.12em]">Simulated proof</Badge>
+                  )}
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-xl">
+                  <div className="rounded-sm border hairline bg-background/40 p-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Influence</div>
+                    <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{a.influence}</div>
+                    <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber" style={{ width: `${a.influence}%` }} />
+                    </div>
+                  </div>
+                  <div className="rounded-sm border hairline bg-background/40 p-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Stability</div>
+                    <div className="font-serif text-[20px] text-cyan mt-1 tabular-nums">{stability}</div>
+                    <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-cyan" style={{ width: `${stability}%` }} />
+                    </div>
+                  </div>
+                  <div className="rounded-sm border hairline bg-background/40 p-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Coalition Power</div>
+                    <div className="font-serif text-[20px] text-silver mt-1 tabular-nums">{coalitionPower}</div>
+                    <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-silver" style={{ width: `${coalitionPower}%` }} />
+                    </div>
+                  </div>
+                  <div className="rounded-sm border hairline bg-background/40 p-3">
+                    <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Public Trust</div>
+                    <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{publicTrust}</div>
+                    <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber" style={{ width: `${publicTrust}%` }} />
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-sm border hairline bg-background/40 p-3">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Stability</div>
-                  <div className="font-serif text-[20px] text-cyan mt-1 tabular-nums">{stability}</div>
-                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-cyan" style={{ width: `${stability}%` }} />
-                  </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-[12px] text-muted-foreground">
+                  {agenticStatus?.txHash ? (
+                    <span>Tx: <span className="text-foreground">{agenticStatus.txHash.slice(0, 12)}...</span></span>
+                  ) : null}
+                  {latestEntry?.rootHash ? (
+                    <span>Root: <span className="text-foreground">{latestEntry.rootHash.slice(0, 12)}...</span></span>
+                  ) : null}
+                  {agenticStatus?.simulated ? <span className="text-amber-400">Simulated registration</span> : null}
                 </div>
-                <div className="rounded-sm border hairline bg-background/40 p-3">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Coalition Power</div>
-                  <div className="font-serif text-[20px] text-silver mt-1 tabular-nums">{coalitionPower}</div>
-                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-silver" style={{ width: `${coalitionPower}%` }} />
-                  </div>
-                </div>
-                <div className="rounded-sm border hairline bg-background/40 p-3">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">Public Trust</div>
-                  <div className="font-serif text-[20px] text-amber mt-1 tabular-nums">{publicTrust}</div>
-                  <div className="mt-2 h-1 bg-foreground/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber" style={{ width: `${publicTrust}%` }} />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <button
-                  onClick={handleRegister}
-                  disabled={registering}
-                  className="px-3 py-1 rounded bg-white text-black"
-                >
-                  {registering ? "Registering..." : "Register Agentic ID"}
-                </button>
-                {agenticStatus?.txHash && (
-                  <span className="font-mono text-sm text-green-400">Tx: {agenticStatus.txHash}</span>
-                )}
-                {agenticStatus?.simulated && (
-                  <span className="font-mono text-sm text-amber-400">Simulated</span>
-                )}
               </div>
             </>
           ) : null}

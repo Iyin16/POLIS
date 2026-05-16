@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, AlertTriangle, Bell, Search, Siren } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, AlertTriangle, Bell, Search, Siren, Wallet } from "lucide-react";
 import { chamberAlerts, chamberSignals } from "@/lib/polis-data";
 import { rotatingIndex } from "@/lib/use-live-pulse";
 
@@ -57,6 +58,7 @@ export function TopNav() {
             <Activity className="h-3.5 w-3.5 text-amber" />
             <span className="font-mono text-[11px] text-muted-foreground">SYS · NOMINAL</span>
           </div>
+          <WalletConnectButton />
         </div>
       </div>
       <MobileTabs />
@@ -94,6 +96,60 @@ function Ticker() {
         <span className="px-4 md:px-6">{line}   ·   {line}</span>
       </div>
     </div>
+  );
+}
+
+function WalletConnectButton() {
+  const [address, setAddress] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      const eth = (window as any).ethereum;
+      if (!eth) {
+        if (mounted) setHasWallet(false);
+        return;
+      }
+      if (mounted) setHasWallet(true);
+      try {
+        const accounts = await eth.request({ method: "eth_accounts" }) as string[];
+        if (mounted) setAddress(accounts?.[0] ?? null);
+      } catch {
+        // ignore
+      }
+    };
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const connectWallet = async () => {
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+    setConnecting(true);
+    try {
+      const accounts = await eth.request({ method: "eth_requestAccounts" }) as string[];
+      setAddress(accounts?.[0] ?? null);
+      setHasWallet(true);
+    } catch {
+      // ignore
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={connectWallet}
+      className="inline-flex items-center gap-2 rounded-md border hairline bg-panel/60 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+    >
+      <Wallet className="h-3.5 w-3.5" />
+      {hasWallet ? (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : (connecting ? "Connecting…" : "Connect Wallet")) : "Install Wallet"}
+    </button>
   );
 }
 
