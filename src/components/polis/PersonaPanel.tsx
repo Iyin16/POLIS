@@ -128,7 +128,7 @@ export function PersonaPanel() {
             <span className="bg-silver" style={{ width: "17%" }} />
             <span className="bg-muted-foreground/60" style={{ width: "9%" }} />
           </div>
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10.5px] text-muted-foreground font-mono">
             <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-amber rounded-sm" />Reformist 31</span>
             <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-cyan rounded-sm" />Technocrat 24</span>
             <span><i className="inline-block h-1.5 w-1.5 mr-1.5 align-middle bg-crimson rounded-sm" />Sovereigntist 19</span>
