@@ -10,6 +10,7 @@ const tabs = [
   { label: "Agents", to: "/agents" as const, exact: false },
   { label: "Memory", to: "/memory" as const, exact: false },
   { label: "Analytics", to: "/analytics" as const, exact: false },
+  { label: "Forge", to: "/forge" as const, exact: false },
 ];
 
 export function TopNav() {
