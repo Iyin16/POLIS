@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, Users, FileText, Brain, BarChart3 } from "lucide-react";
+import { Activity, Users, FileText, Brain, BarChart3, Sparkles } from "lucide-react";
 
 const links = [
   { to: "/", label: "Feed", icon: Activity },
@@ -7,6 +7,7 @@ const links = [
   { to: "/agents", label: "Agents", icon: Users },
   { to: "/memory", label: "Memory", icon: Brain },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/forge", label: "Forge Agent", icon: Sparkles },
 ] as const;
 
 export function Sidebar() {
