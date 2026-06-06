@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { runTurn, type TurnState } from "../src/lib/turnEngine";
+import { createSnapshot, runTurn, type TurnState } from "../src/lib/turnEngine";
 import { getPolisStoreSnapshot } from "../src/lib/polis-store";
 import { proposals } from "../src/lib/polis-data";
 
@@ -33,12 +33,17 @@ async function runSimulation() {
       type: "NONE",
     });
 
+    const snapshot = createSnapshot(state);
+
     console.log("\n--- WORLD STATE ---");
     console.log({
-      turn: state.turn,
-      emotion: (state.worldState as any)?.emotion,
-      dominantFaction: state.worldState?.dominantFaction,
+      turn: snapshot.turn,
+      emotion: snapshot.emotionState,
+      dominantFaction: snapshot.dominantFaction,
       stability: state.worldState?.stability,
+      activeProposal: snapshot.activeProposal,
+      voteResult: snapshot.voteResult,
+      majorEvent: snapshot.majorEvent,
     });
 
     console.log("\n--- LAST EVENT ---");
