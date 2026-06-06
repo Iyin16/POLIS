@@ -339,6 +339,7 @@ export type Proposal = {
   phase: string;
   statusTag: "Active" | "Passed" | "Rejected" | "Tabled";
   lifecycle?: ProposalLifecycle;
+  age?: number;
   category?: ProposalCategory;
   summary: string;
   description: string;

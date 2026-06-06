@@ -129,6 +129,7 @@ function createEngineProposal(state: TurnState, category: ProposalCategory): Pro
     phase: "Proposed",
     statusTag: "Active",
     lifecycle: "Proposed",
+    age: 0,
     category,
     summary: `A ${category.toLowerCase()} proposal intended to shift the chamber's priorities.`,
     description,
@@ -473,7 +474,7 @@ function processProposals(state: TurnState): TurnState {
     const opposition = proposal.votes.against;
     const totalVotes = support + opposition + proposal.votes.abstain;
     const sentiment = totalVotes > 0 ? Math.round((support / Math.max(1, totalVotes)) * 100) : 50;
-    const debateStatus = proposal.lifecycle === "Proposed" ? "Debating — building momentum" : proposal.lifecycle === "Debating" ? "Debating — arguments forming" : `Voting — ${totalVotes} votes tallied`;
+    const age = (proposal.age ?? 0) + 1;
     const lifecycle =
       proposal.statusTag !== "Active"
         ? proposal.lifecycle === "Archived"
@@ -482,12 +483,14 @@ function processProposals(state: TurnState): TurnState {
         : totalVotes > 0
         ? "Voting"
         : proposal.lifecycle ?? "Debating";
+    const debateStatus = proposal.lifecycle === "Proposed" ? "Debating — building momentum" : proposal.lifecycle === "Debating" ? "Debating — arguments forming" : `Voting — ${totalVotes} votes tallied`;
 
     return {
       ...proposal,
       status: totalVotes > 0 ? `Voting — ${totalVotes} votes tallied` : debateStatus,
       lifecycle,
       phase: lifecycle === "Voting" ? "Floor Vote" : lifecycle === "Resolved" ? "Resolved" : "Debate",
+      age,
       sentimentTrend: [...proposal.sentimentTrend.slice(-5), sentiment],
       sentimentDelta: `${sentiment - (proposal.sentimentTrend.slice(-1)[0] ?? 50)}.0`,
     };
@@ -541,12 +544,17 @@ function resolveVotes(state: TurnState): TurnState {
     const opposition = proposal.votes.against;
     const totalVotes = support + opposition + proposal.votes.abstain;
     const majority = Math.max(1, Math.ceil(totalVotes * 0.5));
+    const age = proposal.age ?? 0;
+
+    if (age < 2) {
+      return proposal;
+    }
 
     if (totalVotes >= 4) {
-      if (support > opposition) {
+      if (support > opposition + 1) {
         return { ...proposal, statusTag: "Passed", status: "Voting — Decision reached", lifecycle: "Resolved" };
       }
-      if (opposition > support) {
+      if (opposition > support + 1) {
         return { ...proposal, statusTag: "Rejected", status: "Voting — Decision reached", lifecycle: "Resolved" };
       }
       return { ...proposal, statusTag: "Tabled", status: "Voting — Narrow outcome", lifecycle: "Resolved" };
