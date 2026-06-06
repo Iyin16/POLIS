@@ -6,7 +6,8 @@ export type PlayerAction =
   | { type: "CREATE_AGENT"; data: any }
   | { type: "SUBMIT_PROPOSAL"; data: any }
   | { type: "INFLUENCE_FACTION"; data: any }
-  | { type: "ALIGN_AGENT"; data: any };
+  | { type: "ALIGN_AGENT"; data: any }
+  | { type: "NONE"; data?: any };
 
 export type TurnHistoryEntry = {
   id: string;
