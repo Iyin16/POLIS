@@ -232,11 +232,10 @@ function simulateProposalVoting(state: TurnState): TurnState {
 
     const votes = { ...proposal.votes };
     const agentReactions = [...proposal.agentReactions];
+    const undecidedAgents = state.agents.filter((agent) => !agent.votingHistory.some((entry) => entry.proposal === proposal.id));
+    const voters = undecidedAgents.sort(() => Math.random() - 0.5).slice(0, Math.ceil(undecidedAgents.length * 0.55));
 
-    state.agents.forEach((agent) => {
-      const hasVoted = agent.votingHistory.some((entry) => entry.proposal === proposal.id);
-      if (hasVoted) return;
-
+    voters.forEach((agent) => {
       const preference = getAgentVotePreference(agent, proposal.category);
       const position = getVotePosition(preference);
       const voteNote = `${agent.name} ${position === "endorsed" ? "supports" : position === "opposed" ? "opposes" : "abstains from"} ${proposal.id}.`;
@@ -709,11 +708,11 @@ function updateWorldEmotion(state: TurnState): WorldState & { totalAgents: numbe
   const sentiment: WorldState["globalSentiment"] = averageReputation > 72 ? "positive" : averageReputation < 42 ? "negative" : "neutral";
   let emotion: WorldState["emotion"] = "Stable";
 
-  if (state.worldState.stability < 50 || conflictIntensity > 0.55 || rejected > passed) {
+  if (state.worldState.stability < 48 || conflictIntensity > 0.65 || rejected > passed) {
     emotion = "Fragmenting";
-  } else if (state.worldState.stability < 55 || conflictIntensity > 0.35) {
+  } else if (state.worldState.stability < 55 || conflictIntensity > 0.45) {
     emotion = "Tense";
-  } else if (state.worldState.stability < 70) {
+  } else if (state.worldState.stability < 72) {
     emotion = "Reforming";
   } else {
     emotion = "Stable";
