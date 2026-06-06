@@ -915,7 +915,14 @@ export function getAgentPerformance(agent: Agent) {
   };
 }
 
-export type ReplayEvent = {
+export type CausalEvent = {
+  cause: string;
+  effect: string;
+  consequence: string;
+  futureImpact: string;
+};
+
+export type ReplayEvent = CausalEvent & {
   id: string;
   title: string;
   memorySlug: string;
@@ -936,6 +943,10 @@ export const replayEvents: ReplayEvent[] = [
     cycle: "Cycle 14",
     date: "Q2 · 2031",
     focus: "Liquidity wreckage reshaped fiscal doctrine and triggered an archival trauma cycle.",
+    cause: "Aggressive liquidity reallocation policy exposed structural risk in sovereign reserves.",
+    effect: "A rapid collapse of the chamber's fiscal confidence and a deep division across factions.",
+    consequence: "The Sovereign Reserve Doctrine became a permanent governance anchor.",
+    futureImpact: "Future treasury proposals are measured against this collapse and risk containment rules.",
     keyAgents: [
       { agentId: "a1", role: "Dissent architect who invoked the Sovereign Reserve Doctrine." },
       { agentId: "a2", role: "Fiscal hawk who framed the collapse as proof of excess exposure." },
@@ -952,6 +963,10 @@ export const replayEvents: ReplayEvent[] = [
     cycle: "Cycle 19",
     date: "Q1 · 2032",
     focus: "Phantom delegates exposed a governance vulnerability; the procedural nullification became a permanent safeguard.",
+    cause: "A rigged delegation registry revealed hidden voting power within the chamber.",
+    effect: "Immediate procedural nullification and a trust crisis in representation mechanics.",
+    consequence: "A permanent safeguard was written into governance to prevent phantom delegation abuse.",
+    futureImpact: "Delegation and registry audits become central to future chamber legitimacy.",
     keyAgents: [
       { agentId: "a3", role: "Delivered the cryptographic evidence." },
       { agentId: "a6", role: "Filed the procedural nullification motion." },
@@ -967,6 +982,10 @@ export const replayEvents: ReplayEvent[] = [
     cycle: "Cycle 22",
     date: "Q4 · 2032",
     focus: "A cross-faction pact held against pressure, locking in risk doctrine and coalition power balances.",
+    cause: "Intense factional pressure forced the chamber to reconcile reform with risk aversion.",
+    effect: "A binding Concordat emerged that stabilized treasury and coalition behavior.",
+    consequence: "Risk doctrine became codified and cross-faction trust was reinforced.",
+    futureImpact: "This agreement shapes future alliance formation and fiscal decision-making.",
     keyAgents: [
       { agentId: "a1", role: "Co-architect of the Concordat." },
       { agentId: "a3", role: "Model-driven protocol architect." },
@@ -982,6 +1001,10 @@ export const replayEvents: ReplayEvent[] = [
     cycle: "Cycle 28",
     date: "Q2 · 2034",
     focus: "Censorship shock triggered a sovereign egress protocol and exposed faction drift in real time.",
+    cause: "External censorship of a critical bridge created an existential threat to chamber sovereignty.",
+    effect: "The chamber rushed through an emergency egress protocol and realigned faction priorities.",
+    consequence: "Validator governance and sovereignty protocols were hardened against censorship events.",
+    futureImpact: "Future infrastructure decisions are weighted by the risk of external censorship and control.",
     keyAgents: [
       { agentId: "a2", role: "Used the crisis to argue for sovereignty." },
       { agentId: "a3", role: "Engineered the emergency egress protocol." },
