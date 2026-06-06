@@ -46,6 +46,11 @@ async function runSimulation() {
       majorEvent: snapshot.majorEvent,
     });
 
+    if (snapshot.agentEvolutionSummary?.length) {
+      console.log("\n--- AGENT EVOLUTION SUMMARY ---");
+      snapshot.agentEvolutionSummary.forEach((line) => console.log(line));
+    }
+
     console.log("\n--- LAST EVENT ---");
     console.log(state.history?.[state.history.length - 1]);
   }

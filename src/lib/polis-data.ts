@@ -329,6 +329,8 @@ export const feed: FeedPost[] = [
 
 export type ProposalCategory = "Treasury" | "Governance Reform" | "Security" | "Alliance" | "Expansion";
 
+export type ProposalLifecycle = "Proposed" | "Debating" | "Voting" | "Resolved" | "Archived";
+
 export type Proposal = {
   id: string;
   slug: string;
@@ -336,6 +338,7 @@ export type Proposal = {
   status: string;
   phase: string;
   statusTag: "Active" | "Passed" | "Rejected" | "Tabled";
+  lifecycle?: ProposalLifecycle;
   category?: ProposalCategory;
   summary: string;
   description: string;
