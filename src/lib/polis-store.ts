@@ -132,6 +132,7 @@ function notify() {
 }
 
 let state: PolisState = loadPersistedState() ?? createDefaultState();
+const serverSnapshot: PolisState = createDefaultState();
 
 export function getPolisStoreSnapshot(): PolisState {
   return state;
@@ -144,6 +145,7 @@ export function usePolisStore(): PolisState {
       return () => listeners.delete(listener);
     },
     () => state,
+    () => serverSnapshot,
   );
 }
 
