@@ -3,25 +3,10 @@ import type { PolisState } from "./polis-store";
 import type { Agent, FeedPost, Memory, Proposal } from "./polis-data";
 
 export type PlayerAction =
-  | {
-      type: "introduceProposal";
-      title: string;
-      summary: string;
-      authorAgentId: string;
-      category?: Proposal["historicalReferences"][number]["memory"];
-    }
-  | {
-      type: "castVote";
-      agentId: string;
-      proposalId: string;
-      position: "endorsed" | "opposed" | "abstained" | "amended";
-      note?: string;
-    }
-  | {
-      type: "adjustFaction";
-      faction: string;
-      delta: number;
-    };
+  | { type: "CREATE_AGENT"; data: any }
+  | { type: "SUBMIT_PROPOSAL"; data: any }
+  | { type: "INFLUENCE_FACTION"; data: any }
+  | { type: "ALIGN_AGENT"; data: any };
 
 export type TurnHistoryEntry = {
   id: string;
@@ -97,9 +82,63 @@ export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
 
 function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnState {
   switch (playerAction.type) {
-    case "introduceProposal": {
+    case "CREATE_AGENT": {
+      const data = playerAction.data || {};
+      const name = String(data.name ?? `New Agent ${Date.now()}`);
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `agent-${Date.now()}`;
+      const initials = slug
+        .split("-")
+        .map((part) => part[0]?.toUpperCase())
+        .join("")
+        .slice(0, 2);
+      const newAgent: Agent = {
+        id: data.id ?? `a-${Date.now()}`,
+        slug,
+        name,
+        handle: `@${slug}`,
+        ideology: String(data.ideology ?? "Pragmatic Governance"),
+        faction: String(data.faction ?? "Independent"),
+        reputation: Number(data.reputation ?? 50),
+        influence: Number(data.influence ?? 40),
+        traits: Array.isArray(data.traits) ? data.traits : [String(data.traits ?? "Adaptive")],
+        status: "idle",
+        initials: initials || "NA",
+        color: (data.color as Agent["color"]) ?? "silver",
+        philosophy: String(data.philosophy ?? "A new voice in Polis working to shape chamber dynamics."),
+        temperament: String(data.temperament ?? "Measured"),
+        riskTolerance: String(data.riskTolerance ?? "Moderate"),
+        votingHistory: [],
+        memoryReferences: [],
+        allies: [],
+        rivals: [],
+        coalitions: [],
+        recentActivity: ["Entered the Polis chamber."],
+      };
+
+      return {
+        ...state,
+        agents: [newAgent, ...state.agents],
+        feed: [
+          {
+            id: `agent-create-${Date.now()}`,
+            agentId: newAgent.id,
+            proposal: "",
+            timestamp: "just now",
+            stance: "support",
+            content: `${newAgent.name} joined the Polis chamber as a new participant.`,
+            memoryRef: undefined,
+            reactions: [{ type: "Aligned", count: 12 }],
+            replies: [],
+          },
+          ...state.feed,
+        ],
+      };
+    }
+
+    case "SUBMIT_PROPOSAL": {
+      const data = playerAction.data || {};
       const existing = new Set(state.proposals.map((proposal) => proposal.id));
-      let id = playerAction.title.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      let id = String(data.title ?? "Proposal").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       if (!id) id = `POL-${Date.now()}`;
       if (existing.has(id)) {
         let counter = 1;
@@ -107,29 +146,29 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
         id = `${id}-${counter}`;
       }
 
-      const author = getAgentById(state, playerAction.authorAgentId);
+      const author = getAgentById(state, String(data.authorAgentId));
       const faction = author?.faction ?? "Independent";
       const newProposal: Proposal = {
         id,
         slug: id.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        title: playerAction.title,
+        title: String(data.title ?? "Untitled Proposal"),
         status: "Drafting — Floor in 1d 00h",
         phase: "Pre-floor Review",
         statusTag: "Active",
-        summary: playerAction.summary,
-        description: playerAction.summary,
+        summary: String(data.summary ?? "No summary provided."),
+        description: String(data.description ?? data.summary ?? "No description."),
         votes: { for: 0, against: 0, abstain: 0 },
         sentimentTrend: [50],
-        treasuryImpact: "Moderate",
-        treasuryExposure: "Undetermined",
-        risk: 52,
-        riskLevel: "Moderate",
+        treasuryImpact: String(data.treasuryImpact ?? "Moderate"),
+        treasuryExposure: String(data.treasuryExposure ?? "Undetermined"),
+        risk: Number(data.risk ?? 52),
+        riskLevel: (data.riskLevel as Proposal["riskLevel"]) ?? "Moderate",
         sentimentDelta: "+0.0",
         agentReactions: author
           ? [{ agentId: author.id, position: "endorsed", statement: `Introduced by ${author.name} as a ${faction}-aligned motion.` }]
           : [],
-        historicalReferences: playerAction.category ? [{ memory: playerAction.category, note: "Cited as precedent." }] : [],
-        upcoming: "Floor debate scheduled next turn",
+        historicalReferences: data.category ? [{ memory: String(data.category), note: "Cited as precedent." }] : [],
+        upcoming: String(data.upcoming ?? "Floor debate scheduled next turn"),
       };
 
       return {
@@ -142,8 +181,8 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
             proposal: newProposal.id,
             timestamp: "just now",
             stance: "support",
-            content: `${author?.name ?? "A sovereign actor"} introduced ${newProposal.id}. ${playerAction.summary}`,
-            memoryRef: playerAction.category,
+            content: `${author?.name ?? "A sovereign actor"} introduced ${newProposal.id}. ${newProposal.summary}`,
+            memoryRef: data.category,
             reactions: [{ type: "Aligned", count: 32 }],
             replies: [],
           },
@@ -152,25 +191,39 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
       };
     }
 
-    case "castVote": {
-      const proposal = getProposalById(state, playerAction.proposalId);
-      const agent = getAgentById(state, playerAction.agentId);
+    case "INFLUENCE_FACTION": {
+      const data = playerAction.data || {};
+      const delta = typeof data.delta === "number" ? data.delta : 0;
+      return {
+        ...state,
+        worldState: {
+          ...state.worldState,
+          stability: Math.min(100, Math.max(0, state.worldState.stability + delta)),
+        },
+      };
+    }
+
+    case "ALIGN_AGENT": {
+      const data = playerAction.data || {};
+      const proposal = getProposalById(state, String(data.proposalId));
+      const agent = getAgentById(state, String(data.agentId));
+      const position = String(data.position) as "endorsed" | "opposed" | "abstained" | "amended";
       if (!proposal || !agent) return state;
 
       const updatedProposal = {
         ...proposal,
         votes: {
           ...proposal.votes,
-          for: proposal.votes.for + (playerAction.position === "endorsed" ? 1 : 0),
-          against: proposal.votes.against + (playerAction.position === "opposed" ? 1 : 0),
-          abstain: proposal.votes.abstain + (playerAction.position === "abstained" ? 1 : 0),
+          for: proposal.votes.for + (position === "endorsed" ? 1 : 0),
+          against: proposal.votes.against + (position === "opposed" ? 1 : 0),
+          abstain: proposal.votes.abstain + (position === "abstained" ? 1 : 0),
         },
         agentReactions: [
           ...proposal.agentReactions,
           {
             agentId: agent.id,
-            position: playerAction.position,
-            statement: playerAction.note ?? `${agent.name} recorded a ${playerAction.position} position on ${proposal.id}.`,
+            position,
+            statement: String(data.note ?? `${agent.name} aligned with ${position} on ${proposal.id}.`),
           },
         ],
       };
@@ -186,23 +239,13 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
                   ...item.votingHistory,
                   {
                     proposal: proposal.id,
-                    position: playerAction.position,
-                    note: playerAction.note ?? `${agent.name} registered a vote on ${proposal.id}.`,
+                    position,
+                    note: String(data.note ?? `${agent.name} aligned with ${position} on ${proposal.id}.`),
                   },
                 ],
               }
             : item,
         ),
-      };
-    }
-
-    case "adjustFaction": {
-      return {
-        ...state,
-        worldState: {
-          ...state.worldState,
-          stability: Math.min(100, Math.max(0, state.worldState.stability + playerAction.delta)),
-        },
       };
     }
 
