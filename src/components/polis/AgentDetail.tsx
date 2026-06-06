@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { agentBySlug, agents, memoryByTitle, proposalById } from "@/lib/polis-data";
+import { memoryByTitle, proposalById } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
 import { registerAgenticOnChain, checkAgenticRegistration, getAgenticHistory } from "@/lib/agentic";
 import { CHAINSCAN_URL, AGENTIC_CONTRACT_ADDRESS } from "@/lib/chain";
+import { usePolisStore } from "@/lib/polis-store";
 import { AgentAvatar } from "./AgentAvatar";
 import ChainStatus from "./ChainStatus";
 import { AgentLink, EntityText, MemoryLink, ProposalLink } from "./EntityText";
@@ -29,7 +30,8 @@ const factionColor: Record<string, string> = {
 };
 
 export function AgentDetail({ slug }: { slug: string }) {
-  const a = agentBySlug[slug];
+  const { agents } = usePolisStore();
+  const a = agents.find((agent) => agent.slug === slug) ?? null;
   const agentId = a ? getAgentId(a) : null;
   const [agenticStatus, setAgenticStatus] = useState<any>(null);
   const [registering, setRegistering] = useState(false);

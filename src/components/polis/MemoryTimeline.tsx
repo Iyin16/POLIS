@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { eras, memories, treaties, replayEvents, agentById } from "@/lib/polis-data";
+import { eras, treaties, replayEvents, agentById } from "@/lib/polis-data";
 import { EntityText } from "./EntityText";
 import { Badge } from "@/components/ui/badge";
 import { archiveGovernanceMemory } from "@/lib/0g-storage";
+import { usePolisStore } from "@/lib/polis-store";
 
 const treatyColor: Record<string, string> = {
   Binding: "text-amber border-amber/40 bg-amber/5",
@@ -20,6 +21,7 @@ const catColor: Record<string, string> = {
 };
 
 export function MemoryTimeline() {
+  const { memories } = usePolisStore();
   const [memoryArchiveState, setMemoryArchiveState] = useState<Record<string, { archived: boolean; rootHash?: string; loading?: boolean }>>(
     () => Object.fromEntries(memories.map((memory) => [memory.slug, { archived: memory.archivedOn0g ?? false, rootHash: undefined, loading: false }]))
   );

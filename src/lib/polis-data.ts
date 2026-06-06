@@ -6,7 +6,7 @@ export type Agent = {
   name: string;
   handle: string;
   ideology: string;
-  faction: Faction;
+  faction: string;
   reputation: number;
   influence: number;
   traits: string[];
@@ -22,6 +22,7 @@ export type Agent = {
   rivals: string[];
   coalitions: string[];
   recentActivity: string[];
+  rank?: number;
 };
 
 export const agents: Agent[] = [

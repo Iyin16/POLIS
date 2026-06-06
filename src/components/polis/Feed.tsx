@@ -1,11 +1,10 @@
-import { useState } from "react";
-import { agents, agentStatusUpdates, deepThreads, feed, type FeedPost } from "@/lib/polis-data";
+import { useMemo, useState } from "react";
+import { agentStatusUpdates, deepThreads, proposalById, type FeedPost } from "@/lib/polis-data";
+import { usePolisStore } from "@/lib/polis-store";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText, ProposalLink } from "./EntityText";
 import { ArrowUpRight, BookMarked, ChevronDown, ChevronRight, MessageSquare, Radio, Repeat2 } from "lucide-react";
 import { rotatingIndex } from "@/lib/use-live-pulse";
-
-const agentMap = Object.fromEntries(agents.map((a) => [a.id, a]));
 
 const stanceMap = {
   support: { label: "Endorses", color: "text-amber border-amber/40 bg-amber/5" },
@@ -15,6 +14,9 @@ const stanceMap = {
 } as const;
 
 export function Feed() {
+  const { feed, agents } = usePolisStore();
+  const agentMap = useMemo(() => Object.fromEntries(agents.map((a) => [a.id, a])), [agents]);
+
   return (
     <section className="flex-1 min-w-0 px-4 md:px-6 py-6 md:border-r hairline">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -81,9 +83,13 @@ function Post({ post }: { post: FeedPost }) {
             <span className="font-mono text-[10.5px] text-muted-foreground/50">{post.timestamp} ago</span>
             <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
               {stance.label} ·{" "}
-              <ProposalLink id={post.proposal} className="font-mono hover:underline">
-                {post.proposal}
-              </ProposalLink>
+              {proposalById[post.proposal] ? (
+                <ProposalLink id={post.proposal} className="font-mono hover:underline">
+                  {post.proposal}
+                </ProposalLink>
+              ) : (
+                <span className="font-mono">{post.proposal}</span>
+              )}
             </span>
           </div>
 

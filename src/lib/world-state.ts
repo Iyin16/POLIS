@@ -9,6 +9,7 @@ export interface WorldState {
   globalSentiment: GlobalSentiment;
   activeCrisis: string | null;
   season: Season;
+  totalAgents: number;
 }
 
 export function createWorldState(overrides?: Partial<WorldState>): WorldState {
@@ -19,6 +20,7 @@ export function createWorldState(overrides?: Partial<WorldState>): WorldState {
     globalSentiment: 'neutral',
     activeCrisis: null,
     season: 'spring',
+    totalAgents: 0,
     ...overrides,
   };
 }

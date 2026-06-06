@@ -4,6 +4,7 @@ import {
   Rocket, Shield, Network, Users2, Flame, Zap, Sparkles,
   Plus, Check, Loader2, Hexagon,
 } from "lucide-react";
+import { createAgentInPolisSimulation } from "@/lib/polis-store";
 
 type Title = "Strategist" | "Senator" | "Diplomat" | "Technocrat" | "Revolutionary" | "Architect";
 type Ideology = {
@@ -112,6 +113,22 @@ export function Forge() {
     setStatus("minting");
     await new Promise((r) => setTimeout(r, 2400));
     const hash = "0x" + Array.from({ length: 64 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
+    await createAgentInPolisSimulation({
+      name,
+      title,
+      philosophy,
+      ideology: ideologyObj.name,
+      influence,
+      role,
+      faction: factionMode === "join"
+        ? FACTIONS.find((f) => f.id === factionChoice)?.name ?? "Independent"
+        : factionMode === "create"
+          ? newFaction || "Unnamed Banner"
+          : "Independent",
+      traits,
+      behavior,
+      governance,
+    });
     setMintedHash(hash);
     setStatus("minted");
   };

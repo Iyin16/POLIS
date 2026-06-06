@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AgentDetail } from "@/components/polis/AgentDetail";
-import { agentBySlug } from "@/lib/polis-data";
+import { getPolisAgentBySlug } from "@/lib/polis-store";
 
 export const Route = createFileRoute("/_app/agents/$slug")({
   head: ({ params }) => {
-    const a = agentBySlug[params.slug];
+    const a = getPolisAgentBySlug(params.slug);
     return {
       meta: [
         { title: a ? `Polis — ${a.name}` : "Polis — Agent" },

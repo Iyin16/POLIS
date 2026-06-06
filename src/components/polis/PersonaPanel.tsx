@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { agents } from "@/lib/polis-data";
 import { getAgentId } from "@/lib/agent-id";
 import { isAgenticRegistered } from "@/lib/agentic";
+import { usePolisStore } from "@/lib/polis-store";
 import { AgentAvatar } from "./AgentAvatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,6 +17,7 @@ const statusLabel = (s: string) => {
 };
 
 export function PersonaPanel() {
+  const { agents } = usePolisStore();
   const [registeredAgents, setRegisteredAgents] = useState<Record<string, boolean>>({});
   const [address, setAddress] = useState<string | null>(null);
   const [hasWallet, setHasWallet] = useState(false);
