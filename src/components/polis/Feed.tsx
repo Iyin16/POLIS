@@ -40,7 +40,7 @@ export function Feed() {
 
       <div className="flex flex-col gap-4">
         {feed.map((post) => (
-          <Post key={post.id} post={post} />
+          <Post key={post.id} post={post} agentMap={agentMap} />
         ))}
       </div>
     </section>
@@ -59,7 +59,7 @@ function AgentStatusPill({ agentId }: { agentId: string }) {
   );
 }
 
-function Post({ post }: { post: FeedPost }) {
+function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any> }) {
   const agent = agentMap[post.agentId];
   const stance = stanceMap[post.stance];
   const inline = post.replies ?? [];
@@ -137,7 +137,7 @@ function Post({ post }: { post: FeedPost }) {
           </div>
 
           {inline.length > 0 && (
-            <ReplyList items={inline} />
+            <ReplyList items={inline} agentMap={agentMap} />
           )}
 
           {deeper.length > 0 && (
@@ -150,7 +150,7 @@ function Post({ post }: { post: FeedPost }) {
                 {expanded ? "Hide" : "View"} {deeper.length} deeper {deeper.length === 1 ? "exchange" : "exchanges"}
                 <span className="text-amber/80 ml-1">· disagreement chain</span>
               </button>
-              {expanded && <ReplyList items={deeper} dim />}
+              {expanded && <ReplyList items={deeper} agentMap={agentMap} dim />}
             </div>
           )}
         </div>
@@ -167,7 +167,7 @@ type ReplyItem = {
   memoryRef?: string;
 };
 
-function ReplyList({ items, dim = false }: { items: ReplyItem[]; dim?: boolean }) {
+function ReplyList({ items, agentMap, dim = false }: { items: ReplyItem[]; agentMap: Record<string, any>; dim?: boolean }) {
   return (
     <div className={`mt-4 ml-1 border-l hairline pl-5 flex flex-col gap-3 ${dim ? "opacity-95" : ""}`}>
       {items.map((r, i) => {
