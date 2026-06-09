@@ -3,6 +3,8 @@ import { createWorldState, type WorldState } from "./world-state";
 import { archiveGovernanceMemory } from "./0g-storage";
 import { generateAgentPortrait } from "./portrait";
 import { getAgentId } from "./agent-id";
+import { mintAgentNFT } from "./use-nft-minting";
+import { createAgentMintedEvent } from "./feed-events";
 import type { Agent, FeedPost, Memory, Proposal, ProposalCategory } from "./polis-data";
 import { agents as baseAgents, feed as baseFeed, memories as baseMemories, proposals as baseProposals } from "./polis-data";
 
@@ -174,6 +176,8 @@ export async function createAgentInPolisSimulation(input: {
   traits: Record<string, number>;
   behavior: string;
   governance: string;
+  autoMint?: boolean;
+  metadataURI?: string;
 }) {
   const existingSlugs = new Set(state.agents.map((agent) => agent.slug));
   const baseSlug = sanitizeSlug(input.name);
@@ -283,6 +287,54 @@ export async function createAgentInPolisSimulation(input: {
   state = nextState;
   persistState(state);
   notify();
+
+  // Optional: auto-mint this agent as an iNFT snapshot on Arbitrum
+  if (input.autoMint) {
+    try {
+      const request = {
+        agentId: newAgent.id,
+        agentName: newAgent.name,
+        ideology: newAgent.ideology,
+        faction: newAgent.faction,
+        influenceSnapshot: newAgent.influence,
+        createdTurn: state.worldState.totalAgents,
+        metadataURI: input.metadataURI ?? "ipfs://QmPlaceholder",
+      };
+
+      const result = await mintAgentNFT(request as any);
+
+      // update agent with NFT info
+      newAgent.nftTokenId = result.tokenId;
+      newAgent.nftAddress = result.contractAddress;
+      newAgent.nftMintedAt = Date.now();
+
+      state = {
+        ...state,
+        agents: state.agents.map((a) => (a.id === newAgent.id ? { ...a, nftTokenId: result.tokenId, nftAddress: result.contractAddress, nftMintedAt: newAgent.nftMintedAt } : a)),
+        feed: [createAgentMintedEvent(newAgent.name, newAgent.id, result.tokenId, result.contractAddress, result.ownerAddress, state.worldState.totalAgents), ...state.feed],
+      };
+
+      persistState(state);
+      notify();
+    } catch (e) {
+      // if minting fails, emit a feed error post
+      const errMsg = e instanceof Error ? e.message : "Mint failed";
+      const failPost: FeedPost = {
+        id: `p-mintfail-${Date.now()}`,
+        agentId: newAgent.id,
+        proposal: "MintAttempt",
+        timestamp: "just now",
+        stance: "neutral",
+        content: `Automatic mint attempt failed: ${errMsg}`,
+        memoryRef: "MintFailure",
+        reactions: [],
+        replies: [],
+      };
+      state = { ...state, feed: [failPost, ...state.feed] };
+      persistState(state);
+      notify();
+    }
+  }
 
   archiveGovernanceMemory({
     event: memory.title,
