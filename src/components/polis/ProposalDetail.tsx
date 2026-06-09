@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { agentById, memoryByTitle, proposalBySlug, type Proposal } from "@/lib/polis-data";
+import { agentById, memoryByTitle, type Proposal } from "@/lib/polis-data";
+import { usePolisStore } from "@/lib/polis-store";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText, MemoryLink } from "./EntityText";
 import { ArrowLeft, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
@@ -19,7 +20,8 @@ const positionColor: Record<string, string> = {
 };
 
 export function ProposalDetail({ slug }: { slug: string }) {
-  const p = proposalBySlug[slug];
+  const { proposals } = usePolisStore();
+  const p = proposals.find((proposal) => proposal.slug === slug);
   if (!p) return <NotFound slug={slug} />;
   return (
     <section className="px-4 md:px-6 py-8 max-w-5xl">
@@ -36,7 +38,13 @@ export function ProposalDetail({ slug }: { slug: string }) {
           <span className="font-mono text-[10.5px] text-muted-foreground">{p.phase}</span>
         </div>
         <h1 className="font-serif text-2xl md:text-3xl tracking-tight mt-2">{p.title}</h1>
-        <p className="font-mono text-[11px] text-muted-foreground mt-1">{p.status}</p>
+        <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+          <span>{p.status}</span>
+          <span>{p.origin} origin</span>
+          {p.proposerName ? <span>Proposed by {p.proposerName}</span> : null}
+          {p.createdTurn ? <span>Created turn {p.createdTurn}</span> : null}
+          {p.resolvedTurn ? <span>Resolved turn {p.resolvedTurn}</span> : null}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">

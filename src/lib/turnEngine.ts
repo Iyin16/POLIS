@@ -1,6 +1,6 @@
 import type { WorldState } from "./world-state";
 import type { PolisState } from "./polis-store";
-import type { Agent, FeedPost, Memory, Proposal, ProposalCategory, ProposalLifecycle } from "./polis-data";
+import type { Agent, FeedPost, Memory, Proposal, ProposalCategory, ProposalLifecycle, ProposalOrigin } from "./polis-data";
 
 const proposalCategories: ProposalCategory[] = ["Treasury", "Governance Reform", "Security", "Alliance", "Expansion"];
 
@@ -121,35 +121,50 @@ function getVotePosition(preference: string) {
 }
 
 function shouldSpawnProposal(state: TurnState) {
-  const active = state.proposals.some((proposal) => proposal.statusTag === "Active");
-  return !active;
+  const activeCount = state.proposals.filter((proposal) => proposal.statusTag === "Active").length;
+  return activeCount < 2;
 }
 
 function createEngineProposal(state: TurnState, category: ProposalCategory): Proposal {
-  const id = `POL-${100 + state.turn}`;
+  const origin: ProposalOrigin = Math.random() > 0.5 ? "WORLD" : "AGENT";
+  const proposer = origin === "AGENT" ? state.agents[Math.floor(Math.random() * state.agents.length)] : undefined;
+  const id = `POL-${100 + state.turn}-${Math.floor(Math.random() * 90 + 10)}`;
   const title = buildProposalTitle(category, state.turn);
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   const description = `${category} policy drafted to shape the chamber's next cycle.`;
+  const impactLevel = category === "Security" || category === "Treasury" ? "High" : category === "Expansion" ? "Moderate" : "Low" as const;
   return {
     id,
     slug,
     title,
+    origin,
+    proposerId: proposer?.id,
+    proposerName: proposer?.name ?? (origin === "WORLD" ? "World Event" : "Anonymous Agent"),
     status: "Created — waiting debate",
     phase: "Created",
     statusTag: "Active",
     lifecycle: "Created",
+    createdTurn: state.turn,
     age: 0,
     category,
     summary: `A ${category.toLowerCase()} proposal intended to shift the chamber's priorities.`,
     description,
     votes: { for: 0, against: 0, abstain: 0 },
-    sentimentTrend: [50],
+    supportVotes: 0,
+    opposeVotes: 0,
+    abstainVotes: 0,
+    outcome: "Pending",
+    impactLevel,
     treasuryImpact: category === "Treasury" ? "+2.4% reserves" : "Moderate",
     treasuryExposure: category === "Expansion" ? "Increased" : "Contained",
     risk: category === "Security" ? 68 : 52,
     riskLevel: category === "Security" ? "Elevated" : "Moderate",
+    memoryTags: [category, origin, proposer?.name ?? "world"],
+    sentimentTrend: [50],
     sentimentDelta: "+0.0",
-    agentReactions: [],
+    agentReactions: proposer
+      ? [{ agentId: proposer.id, position: "endorsed", statement: `${proposer.name} generated this proposal.` }]
+      : [],
     historicalReferences: [],
     upcoming: "Debate begins next turn",
   };
@@ -170,7 +185,7 @@ function createMemoryFromProposal(state: TurnState, proposal: Proposal): Memory 
     slug: proposal.slug,
     cycle: `Cycle ${state.turn}`,
     date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-    title: `${proposal.title} ${proposal.statusTag === "Passed" ? "Ratified" : proposal.statusTag === "Rejected" ? "Rejected" : "Resolved"}`,
+    title: `${proposal.title} ${proposal.statusTag === "Passed" ? "Ratified" : proposal.statusTag === "Rejected" ? "Rejected" : proposal.statusTag === "Tabled"}`,
     category: proposal.category ? categoryMap[proposal.category] : "Community",
     summary: `${proposal.title} was ${proposal.statusTag.toLowerCase()} by the chamber and archived as a defining memory.`,
     weight: Math.min(98, Math.max(42, proposal.risk + (proposal.statusTag === "Passed" ? 20 : -10))),
@@ -187,17 +202,18 @@ function createMemoryFromProposal(state: TurnState, proposal: Proposal): Memory 
     ],
     trustImpact: proposal.statusTag === "Passed" ? "Trust increased among supporters." : "Trust weakened among undecided factions.",
     citationCount: 1,
+    memoryTags: proposal.memoryTags ?? [proposal.category ?? "Community", proposal.origin ?? "WORLD"],
   };
 }
 
 function archiveResolvedProposals(state: TurnState): TurnState {
-  const resolved = state.proposals.filter((proposal) => proposal.statusTag !== "Active" && proposal.lifecycle !== "Archived");
-  if (resolved.length === 0) return state;
+  const archived = state.proposals.filter((proposal) => proposal.lifecycle === "Archived");
+  if (archived.length === 0) return state;
 
-  const archivedMemories = resolved.map((proposal) => createMemoryFromProposal(state, proposal));
+  const archivedMemories = archived.map((proposal) => createMemoryFromProposal(state, proposal));
   return {
     ...state,
-    proposals: state.proposals.filter((proposal) => proposal.statusTag === "Active"),
+    proposals: state.proposals.filter((proposal) => proposal.lifecycle !== "Archived"),
     memories: [...state.memories, ...archivedMemories],
   };
 }
@@ -210,7 +226,7 @@ function maybeGenerateProposal(state: TurnState): TurnState {
   const event = {
     id: `event-${Date.now()}`,
     title: proposal.title,
-    description: `New ${category.toLowerCase()} proposal introduced to the chamber.`,
+    description: `New ${proposal.origin.toLowerCase()} ${category.toLowerCase()} proposal introduced to the chamber.`,
   };
 
   return {
@@ -220,12 +236,12 @@ function maybeGenerateProposal(state: TurnState): TurnState {
     feed: [
       {
         id: `p-turn-${Date.now()}`,
-        agentId: state.agents[0]?.id ?? "",
+        agentId: proposal.proposerId ?? state.agents[0]?.id ?? "",
         proposal: proposal.id,
         timestamp: "just now",
         stance: "support",
-        content: `A new ${category.toLowerCase()} proposal, ${proposal.title}, has entered the agenda.`,
-        memoryRef: undefined,
+        content: `A new ${proposal.origin.toLowerCase()} ${category.toLowerCase()} proposal, ${proposal.title}, has entered the agenda.`,
+        memoryRef: proposal.memoryTags?.[0],
         reactions: [{ type: "Aligned", count: 18 }],
         replies: [],
       },
@@ -262,6 +278,9 @@ function simulateProposalVoting(state: TurnState): TurnState {
     return {
       ...proposal,
       votes,
+      supportVotes: votes.for,
+      opposeVotes: votes.against,
+      abstainVotes: votes.abstain,
       agentReactions,
     };
   });
@@ -369,26 +388,40 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
       }
 
       const author = getAgentById(state, String(data.authorAgentId));
-      const faction = author?.faction ?? "Independent";
+      const proposerName = author?.name ?? String(data.proposerName ?? "Human Delegate");
+      const impactLevel = (data.impactLevel as Proposal["impactLevel"]) ?? "Moderate";
+      const origin: ProposalOrigin = "HUMAN";
       const newProposal: Proposal = {
         id,
-        slug: id.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        slug: id.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
         title: String(data.title ?? "Untitled Proposal"),
+        origin,
+        proposerId: author?.id,
+        proposerName,
         status: "Created — waiting debate",
         phase: "Created",
         statusTag: "Active",
         lifecycle: "Created",
+        createdTurn: state.turn,
+        age: 0,
+        category: String(data.category) as Proposal["category"],
         summary: String(data.summary ?? "No summary provided."),
         description: String(data.description ?? data.summary ?? "No description."),
         votes: { for: 0, against: 0, abstain: 0 },
-        sentimentTrend: [50],
+        supportVotes: 0,
+        opposeVotes: 0,
+        abstainVotes: 0,
+        outcome: "Pending",
+        impactLevel,
         treasuryImpact: String(data.treasuryImpact ?? "Moderate"),
         treasuryExposure: String(data.treasuryExposure ?? "Undetermined"),
         risk: Number(data.risk ?? 52),
         riskLevel: (data.riskLevel as Proposal["riskLevel"]) ?? "Moderate",
+        memoryTags: [String(data.category ?? "General"), "HUMAN"],
+        sentimentTrend: [50],
         sentimentDelta: "+0.0",
         agentReactions: author
-          ? [{ agentId: author.id, position: "endorsed", statement: `Introduced by ${author.name} as a ${faction}-aligned motion.` }]
+          ? [{ agentId: author.id, position: "endorsed", statement: `Introduced by ${author.name} as a ${author.faction}-aligned motion.` }]
           : [],
         historicalReferences: data.category ? [{ memory: String(data.category), note: "Cited as precedent." }] : [],
         upcoming: String(data.upcoming ?? "Debate begins next turn"),
@@ -404,7 +437,7 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
             proposal: newProposal.id,
             timestamp: "just now",
             stance: "support",
-            content: `${author?.name ?? "A sovereign actor"} introduced ${newProposal.id}. ${newProposal.summary}`,
+            content: `${proposerName} submitted ${newProposal.title} to the chamber. ${newProposal.summary}`,
             memoryRef: data.category,
             reactions: [{ type: "Aligned", count: 32 }],
             replies: [],
@@ -490,10 +523,17 @@ function processProposals(state: TurnState): TurnState {
     let upcoming = proposal.upcoming ?? "";
 
     if (proposal.statusTag !== "Active") {
-      lifecycle = proposal.lifecycle === "Archived" ? "Archived" : "Resolved";
-      status = proposal.statusTag === "Passed" ? "Resolved — adopted" : proposal.statusTag === "Rejected" ? "Resolved — rejected" : "Resolved — deferred";
-      phase = "Resolved";
-      upcoming = "History archive pending";
+      if (age >= 4) {
+        lifecycle = "Archived";
+        status = `${proposal.statusTag === "Passed" ? "Archived" : proposal.statusTag === "Rejected" ? "Archived" : "Archived"} — preserved as memory`;
+        phase = "Archived";
+        upcoming = "Recorded in memory timeline";
+      } else {
+        lifecycle = "Resolved";
+        status = proposal.statusTag === "Passed" ? "Resolved — adopted" : proposal.statusTag === "Rejected" ? "Resolved — rejected" : "Resolved — tabled";
+        phase = "Resolved";
+        upcoming = "Archive pending next turn";
+      }
     } else {
       if (age === 1) {
         lifecycle = "Created";
@@ -505,11 +545,16 @@ function processProposals(state: TurnState): TurnState {
         status = `Debated — ${totalVotes} reactions so far`;
         phase = "Debate";
         upcoming = totalVotes > 0 ? "Vote approaches" : "Build support before voting";
-      } else {
+      } else if (age === 3) {
         lifecycle = "Voted";
-        status = `Voted — ${totalVotes} tallied`;
+        status = `Voting — ${totalVotes} tallied`;
         phase = "Vote";
         upcoming = "Resolution decision imminent";
+      } else {
+        lifecycle = "Voted";
+        status = `Voting — finalizing outcome`;
+        phase = "Vote";
+        upcoming = "Resolution ready";
       }
     }
 
@@ -520,6 +565,9 @@ function processProposals(state: TurnState): TurnState {
       phase,
       age,
       upcoming,
+      supportVotes: support,
+      opposeVotes: opposition,
+      abstainVotes: proposal.votes.abstain,
       sentimentTrend: [...proposal.sentimentTrend.slice(-5), sentiment],
       sentimentDelta: `${sentiment - (proposal.sentimentTrend.slice(-1)[0] ?? 50)}.0`,
     };
@@ -575,7 +623,7 @@ function resolveVotes(state: TurnState): TurnState {
     const majority = Math.max(1, Math.ceil(totalVotes * 0.5));
     const age = proposal.age ?? 0;
 
-    if (age < 2) {
+    if (age < 3) {
       return proposal;
     }
 
@@ -584,19 +632,48 @@ function resolveVotes(state: TurnState): TurnState {
       return proposal;
     }
 
+    const resolvedTurn = state.turn;
     if (support > opposition + 1) {
-      return { ...proposal, statusTag: "Passed", status: "Voting — Decision reached", lifecycle: "Resolved" };
+      return {
+        ...proposal,
+        statusTag: "Passed",
+        status: "Voting — Decision reached",
+        lifecycle: "Resolved",
+        outcome: "Passed",
+        resolvedTurn,
+      };
     }
 
     if (opposition > support + 1) {
-      return { ...proposal, statusTag: "Rejected", status: "Voting — Decision reached", lifecycle: "Resolved" };
+      return {
+        ...proposal,
+        statusTag: "Rejected",
+        status: "Voting — Decision reached",
+        lifecycle: "Resolved",
+        outcome: "Rejected",
+        resolvedTurn,
+      };
     }
 
     if (totalVotes === 0) {
-      return { ...proposal, statusTag: "Tabled", status: "Voted — No consensus", lifecycle: "Resolved" };
+      return {
+        ...proposal,
+        statusTag: "Tabled",
+        status: "Voted — No consensus",
+        lifecycle: "Resolved",
+        outcome: "Tabled",
+        resolvedTurn,
+      };
     }
 
-    return { ...proposal, statusTag: "Tabled", status: "Voted — Narrow outcome", lifecycle: "Resolved" };
+    return {
+      ...proposal,
+      statusTag: "Tabled",
+      status: "Voted — Narrow outcome",
+      lifecycle: "Resolved",
+      outcome: "Tabled",
+      resolvedTurn,
+    };
   });
 
   return {

@@ -7,8 +7,6 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  // Disable Cloudflare plugin — build for Node.js (Replit autoscale)
-  cloudflare: false,
   tanstackStart: {
     server: {
       entry: "server",

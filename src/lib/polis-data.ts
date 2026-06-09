@@ -329,26 +329,39 @@ export const feed: FeedPost[] = [
 
 export type ProposalCategory = "Treasury" | "Governance Reform" | "Security" | "Alliance" | "Expansion";
 
+export type ProposalOrigin = "HUMAN" | "AGENT" | "WORLD";
+
 export type ProposalLifecycle = "Created" | "Debated" | "Voted" | "Resolved" | "Archived";
 
 export type Proposal = {
   id: string;
   slug: string;
   title: string;
+  origin: ProposalOrigin;
+  proposerId?: string;
+  proposerName?: string;
   status: string;
   phase: string;
   statusTag: "Active" | "Passed" | "Rejected" | "Tabled";
   lifecycle?: ProposalLifecycle;
+  createdTurn?: number;
+  resolvedTurn?: number;
   age?: number;
   category?: ProposalCategory;
   summary: string;
   description: string;
   votes: { for: number; against: number; abstain: number };
-  sentimentTrend: number[];
+  supportVotes?: number;
+  opposeVotes?: number;
+  abstainVotes?: number;
+  outcome?: "Passed" | "Rejected" | "Tabled" | "Pending";
+  impactLevel?: "Low" | "Moderate" | "High" | "Critical";
   treasuryImpact: string;
   treasuryExposure: string;
   risk: number;
   riskLevel: "Low" | "Moderate" | "Elevated" | "Critical";
+  memoryTags?: string[];
+  sentimentTrend: number[];
   sentimentDelta: string;
   agentReactions: { agentId: string; position: "endorsed" | "opposed" | "amended" | "abstained"; statement: string }[];
   historicalReferences: { memory: string; note: string }[];
@@ -360,6 +373,7 @@ export const proposals: Proposal[] = [
     id: "POL-247",
     slug: "pol-247",
     title: "Sovereign Liquidity Reallocation Act",
+    origin: "WORLD",
     status: "Deliberation — Voting opens in 06:42:11",
     phase: "Floor Deliberation",
     statusTag: "Active",
@@ -389,6 +403,7 @@ export const proposals: Proposal[] = [
     id: "POL-251",
     slug: "pol-251",
     title: "Delegation Weight Reform Act",
+    origin: "WORLD",
     status: "Scheduled — Floor in 2d 14h",
     phase: "Pre-floor Review",
     statusTag: "Active",
@@ -417,6 +432,7 @@ export const proposals: Proposal[] = [
     id: "POL-253",
     slug: "pol-253",
     title: "Bridge Sovereignty Charter",
+    origin: "WORLD",
     status: "Drafting — Floor in 4d 02h",
     phase: "Coalition Drafting",
     statusTag: "Active",
@@ -444,6 +460,7 @@ export const proposals: Proposal[] = [
     id: "POL-256",
     slug: "pol-256",
     title: "Censure of Validator Set V-19",
+    origin: "WORLD",
     status: "Scheduled — Floor in 6d 11h",
     phase: "Pre-floor Review",
     statusTag: "Active",
@@ -470,6 +487,7 @@ export const proposals: Proposal[] = [
     id: "POL-188",
     slug: "pol-188",
     title: "Delegation Registry Restructuring (Vacated)",
+    origin: "WORLD",
     status: "Vacated — Cycle 19",
     phase: "Closed",
     statusTag: "Rejected",
@@ -497,6 +515,7 @@ export const proposals: Proposal[] = [
     id: "POL-119",
     slug: "pol-119",
     title: "Cross-Vault Liquidity Authorization (Collapsed)",
+    origin: "WORLD",
     status: "Collapsed — Cycle 14",
     phase: "Closed",
     statusTag: "Rejected",
@@ -542,6 +561,7 @@ export type Memory = {
   longTermImpact: string[];
   trustImpact: string;
   citationCount: number;
+  memoryTags?: string[];
   archivedOn0g?: boolean;
   galileoVerified?: boolean;
 };

@@ -2,8 +2,8 @@ import { useSyncExternalStore } from "react";
 import { createWorldState, type WorldState } from "./world-state";
 import { archiveGovernanceMemory } from "./0g-storage";
 import { getAgentId } from "./agent-id";
-import type { Agent, FeedPost, Memory } from "./polis-data";
-import { agents as baseAgents, feed as baseFeed, memories as baseMemories } from "./polis-data";
+import type { Agent, FeedPost, Memory, Proposal, ProposalCategory } from "./polis-data";
+import { agents as baseAgents, feed as baseFeed, memories as baseMemories, proposals as baseProposals } from "./polis-data";
 
 const STORAGE_KEY = "polis-simulation-state";
 
@@ -11,6 +11,7 @@ export type PolisState = {
   agents: Agent[];
   feed: FeedPost[];
   memories: Memory[];
+  proposals: Proposal[];
   worldState: WorldState & { totalAgents: number };
 };
 
@@ -75,6 +76,7 @@ function createDefaultState(): PolisState {
     agents: [...baseAgents],
     feed: [...baseFeed],
     memories: [...baseMemories],
+    proposals: [...baseProposals],
     worldState: {
       ...createWorldState(),
       totalAgents: baseAgents.length,
@@ -93,6 +95,7 @@ function loadPersistedState(): PolisState | null {
       agents: [...base.agents, ...(persisted.agents ?? [])],
       feed: [...(persisted.feed ? [...persisted.feed, ...base.feed] : base.feed)],
       memories: [...base.memories, ...(persisted.memories ?? [])],
+      proposals: [...base.proposals, ...(persisted.proposals ?? [])],
       worldState: {
         ...base.worldState,
         ...(persisted.worldState ?? {}),
@@ -110,12 +113,14 @@ function persistState(state: PolisState) {
     const createdAgents = state.agents.slice(base.agents.length);
     const createdFeed = state.feed.filter((post) => !base.feed.some((basePost) => basePost.id === post.id));
     const createdMemories = state.memories.slice(base.memories.length);
+    const createdProposals = state.proposals.slice(base.proposals.length);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         agents: createdAgents,
         feed: createdFeed,
         memories: createdMemories,
+        proposals: createdProposals,
         worldState: {
           totalAgents: state.worldState.totalAgents,
           dominantFaction: state.worldState.dominantFaction,
@@ -173,7 +178,7 @@ export async function createAgentInPolisSimulation(input: {
   const baseSlug = sanitizeSlug(input.name);
   const slug = ordinalSlug(baseSlug || `agent-${Date.now()}`, existingSlugs);
   const id = `a-${Math.abs(
-    Array.from({ length: 6 }).reduce((hash, _, index) => {
+    Array.from({ length: 6 }).reduce<number>((hash, _, index) => {
       const char = input.name.charCodeAt(index % input.name.length) || 0;
       return (hash << 5) - hash + char + index;
     }, 0),
@@ -257,6 +262,7 @@ export async function createAgentInPolisSimulation(input: {
     agents: [...state.agents, newAgent],
     feed: [feedPost, ...state.feed],
     memories: [memory, ...state.memories],
+    proposals: [...state.proposals],
     worldState: {
       ...state.worldState,
       totalAgents: state.agents.length + 1,
@@ -285,4 +291,81 @@ export async function createAgentInPolisSimulation(input: {
   }).catch(() => null);
 
   return { agent: newAgent, feed: feedPost, memory };
+}
+
+export async function submitProposalToPolisSimulation(input: {
+  title: string;
+  category: ProposalCategory;
+  description: string;
+  summary: string;
+  impactLevel: "Low" | "Moderate" | "High" | "Critical";
+  proposerName?: string;
+  proposerId?: string;
+  authorAgentId?: string;
+}) {
+  const existingSlugs = new Set(state.proposals.map((proposal) => proposal.slug));
+  const baseSlug = sanitizeSlug(input.title);
+  const slug = ordinalSlug(baseSlug || `proposal-${Date.now()}`, existingSlugs);
+  const id = `POL-${slug.toUpperCase()}`;
+  const author = input.authorAgentId ? state.agents.find((agent) => agent.id === input.authorAgentId) : undefined;
+  const proposerName = author?.name ?? input.proposerName ?? "Human Delegate";
+
+  const newProposal: Proposal = {
+    id,
+    slug,
+    title: input.title,
+    origin: "HUMAN",
+    proposerId: author?.id ?? input.proposerId,
+    proposerName,
+    status: "Created — waiting debate",
+    phase: "Created",
+    statusTag: "Active",
+    lifecycle: "Created",
+    createdTurn: state.worldState.totalAgents,
+    age: 0,
+    category: input.category,
+    summary: input.summary,
+    description: input.description,
+    votes: { for: 0, against: 0, abstain: 0 },
+    supportVotes: 0,
+    opposeVotes: 0,
+    abstainVotes: 0,
+    outcome: "Pending",
+    impactLevel: input.impactLevel,
+    treasuryImpact: "Moderate",
+    treasuryExposure: "Undetermined",
+    risk: 52,
+    riskLevel: "Moderate",
+    memoryTags: [input.category, "HUMAN"],
+    sentimentTrend: [50],
+    sentimentDelta: "+0.0",
+    agentReactions: author
+      ? [{ agentId: author.id, position: "endorsed", statement: `${author.name} introduced this human submission.` }]
+      : [],
+    historicalReferences: [],
+    upcoming: "Debate begins next turn",
+  };
+
+  const feedPost: FeedPost = {
+    id: `p-proposal-${Date.now()}`,
+    agentId: author?.id ?? "",
+    proposal: newProposal.id,
+    timestamp: "just now",
+    stance: "support",
+    content: `${proposerName} submitted ${newProposal.title} to the chamber as a human-origin proposal.`,
+    memoryRef: input.category,
+    reactions: [{ type: "Aligned", count: 28 }],
+    replies: [],
+  };
+
+  state = {
+    ...state,
+    proposals: [newProposal, ...state.proposals],
+    feed: [feedPost, ...state.feed],
+  };
+
+  persistState(state);
+  notify();
+
+  return { proposal: newProposal, feed: feedPost };
 }
