@@ -12,6 +12,7 @@ import {
   createDominanceChangeEvent,
   createEmotionChangeEvent,
   createMemoryArchivedEvent,
+  createTurnSummaryEvent,
   createAgentJoinedEvent,
   createFeedEvent,
 } from "./feed-events";
@@ -321,6 +322,9 @@ function simulateProposalVoting(state: TurnState): TurnState {
 }
 
 export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
+  const priorDominant = state.worldState?.dominantFaction ?? null;
+  const priorEmotion = state.worldState?.emotion ?? (state.worldState as any)?.globalSentiment ?? "Stable";
+
   let newState = cloneState(state);
   newState.turn = (state.turn ?? 0) + 1;
 
@@ -337,8 +341,42 @@ export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
   newState = updateFactions(newState);
   newState = evolveAgents(newState);
   newState.worldState = updateWorldEmotion(newState);
+  // Emit world emotion change event if emotion changed
+  try {
+    const newEmotion = newState.worldState?.emotion;
+    if (newEmotion && newEmotion !== priorEmotion) {
+      const repId = newState.agents[0]?.id ?? "";
+      const ev = createEmotionChangeEvent(priorEmotion, newEmotion, newState.turn, repId);
+      newState.feed = [ev, ...newState.feed].slice(0, 50);
+    }
+  } catch (e) {
+    // ignore
+  }
   newState.history = [...newState.history, createHistoryEntry(newState)];
   newState = archiveResolvedProposals(newState);
+
+  // Emit dominance change if the dominant faction shifted this turn
+  try {
+    const newDominant = newState.worldState?.dominantFaction ?? null;
+    if (newDominant && newDominant !== priorDominant) {
+      const repId = newState.agents.find((a) => a.faction === newDominant)?.id ?? newState.agents[0]?.id ?? "";
+      const ev = createDominanceChangeEvent(priorDominant, newDominant, newState.turn, repId);
+      newState.feed = [ev, ...newState.feed].slice(0, 50);
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Always add a turn summary feed item so every turn has at least one update
+  try {
+    const title = `Turn ${newState.turn} Summary`;
+    const description = generateTurnSummary(newState);
+    const repId = newState.agents[0]?.id ?? "";
+    const summaryEv = createTurnSummaryEvent(title, description, newState.turn, repId, "Medium");
+    newState.feed = [summaryEv, ...newState.feed].slice(0, 50);
+  } catch (e) {
+    // ignore
+  }
 
   return newState;
 }
@@ -606,17 +644,11 @@ function processAgentBehavior(state: TurnState): TurnState {
     const stance = preference === "support" ? "support" : preference === "oppose" ? "oppose" : "neutral";
     const reactionType = stance === "support" ? "Aligned" : stance === "oppose" ? "Contested" : "Observed";
 
-    feedUpdates.push({
-      id: `p-behavior-${proposal.id}-${Date.now()}`,
-      agentId: actor.id,
-      proposal: proposal.id,
-      timestamp: "now",
-      stance: stance as FeedPost["stance"],
-      content: `${actor.name} is reacting to ${proposal.title} with a ${stance} stance.`,
-      memoryRef: proposal.historicalReferences[0]?.memory,
-      reactions: [{ type: reactionType, count: Math.max(8, Math.floor(Math.random() * 56)) }],
-      replies: [],
-    });
+    const position = stance === "support" ? "endorsed" : stance === "oppose" ? "opposed" : "abstained";
+    const statement = `${actor.name} is reacting to ${proposal.title} with a ${stance} stance.`;
+    feedUpdates.push(
+      createAgentReactionEvent(actor.name, actor.id, proposal, position as any, statement, state.turn),
+    );
   });
 
   return {

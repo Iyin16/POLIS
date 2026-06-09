@@ -290,6 +290,24 @@ export function createMemoryArchivedEvent(
   );
 }
 
+export function createTurnSummaryEvent(
+  title: string,
+  description: string,
+  turn: number,
+  representativeId: string,
+  impactLevel: "Low" | "Medium" | "High" | "Critical" = "Medium",
+): FeedPost {
+  return createFeedEvent(
+    "TurnSummary",
+    title,
+    description,
+    [representativeId],
+    impactLevel,
+    turn,
+    representativeId,
+  );
+}
+
 export function createAgentJoinedEvent(
   agentName: string,
   agentId: string,
