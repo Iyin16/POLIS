@@ -52,6 +52,42 @@ export interface UseNFTMintingReturn {
  */
 import { ethers } from "ethers";
 
+const POLIS_AGENT_NFT_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "to", type: "address" },
+      { internalType: "string", name: "polisAgentId", type: "string" },
+      {
+        components: [
+          { internalType: "string", name: "agentName", type: "string" },
+          { internalType: "string", name: "ideology", type: "string" },
+          { internalType: "string", name: "faction", type: "string" },
+          { internalType: "uint256", name: "influenceSnapshot", type: "uint256" },
+          { internalType: "uint256", name: "createdTurn", type: "uint256" },
+          { internalType: "string", name: "metadataURI", type: "string" },
+        ],
+        internalType: "struct PolisAgentNFT.AgentNFTData",
+        name: "data",
+        type: "tuple",
+      },
+    ],
+    name: "mintAgentNFT",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "from", type: "address" },
+      { indexed: true, internalType: "address", name: "to", type: "address" },
+      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+    ],
+    name: "Transfer",
+    type: "event",
+  },
+];
+
 export async function mintAgentNFT(
   request: MintAgentNFTRequest,
 ): Promise<MintResult> {
@@ -69,19 +105,7 @@ export async function mintAgentNFT(
       const contractAddress = process.env.REACT_APP_POLIS_NFT_CONTRACT;
 
       if (!contractAddress) throw new Error("Missing REACT_APP_POLIS_NFT_CONTRACT environment variable");
-
-      // Try to load ABI from bundled artifact
-      let abi: any = undefined;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        abi = (await import("./abis/PolisAgentNFT.json")).default;
-      } catch (e) {
-        // If ABI not present, try window-provided ABI
-        abi = (window as any).__POLIS_NFT_ABI__;
-      }
-
-      if (!abi) throw new Error("Contract ABI not found. Place PolisAgentNFT.json in src/lib/abis or provide window.__POLIS_NFT_ABI__");
-
+      const abi = POLIS_AGENT_NFT_ABI;
       const contract = new ethers.Contract(contractAddress, abi, signer as any);
 
       // Build struct according to contract: (agentName, ideology, faction, influenceSnapshot, createdTurn, metadataURI)
