@@ -639,23 +639,27 @@ function updateFactions(state: TurnState): TurnState {
   });
 
   if (state.turn === 3) {
-    counts.Technocrat = (counts.Technocrat ?? 0) + 18;
-    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 6);
+    counts.Technocrat = (counts.Technocrat ?? 0) + 28;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 12);
+    counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 4;
   }
 
   if (state.turn === 4) {
-    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) - 12);
-    counts.Populist = (counts.Populist ?? 0) + 6;
+    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) - 20);
+    counts.Technocrat = (counts.Technocrat ?? 0) + 8;
+    counts.Populist = (counts.Populist ?? 0) + 10;
   }
 
   if (state.turn === 5) {
-    counts.Reformist = (counts.Reformist ?? 0) + 8;
-    counts.Technocrat = (counts.Technocrat ?? 0) + 8;
+    counts.Reformist = (counts.Reformist ?? 0) + 12;
+    counts.Technocrat = (counts.Technocrat ?? 0) + 12;
+    counts.Accelerationist = (counts.Accelerationist ?? 0) + 6;
   }
 
   if (state.turn === 6) {
-    counts.Technocrat = (counts.Technocrat ?? 0) + 14;
-    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 5);
+    counts.Technocrat = (counts.Technocrat ?? 0) + 24;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 10);
+    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) + 4);
   }
 
   resolvedProposals.forEach((proposal) => {
