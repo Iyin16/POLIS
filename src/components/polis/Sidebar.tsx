@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Activity, Users, FileText, Brain, BarChart3, Sparkles } from "lucide-react";
+import { Activity, Users, FileText, Brain, BarChart3, Sparkles, Crown, FileSignature } from "lucide-react";
 
 const links = [
   { to: "/", label: "Feed", icon: Activity },
   { to: "/proposals", label: "Proposals", icon: FileText },
+  { to: "/propose", label: "Propose", icon: FileSignature },
   { to: "/agents", label: "Agents", icon: Users },
   { to: "/memory", label: "Memory", icon: Brain },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/forge", label: "Forge Agent", icon: Sparkles },
+  { to: "/dominance", label: "Dominance", icon: Crown },
 ] as const;
 
 export function Sidebar() {
