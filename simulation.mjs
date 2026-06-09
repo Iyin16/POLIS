@@ -438,29 +438,28 @@ function printTurnSummary(turn, ws) {
     console.log(`  ideology shifts → ${shifts.map(s => `${dim(s.name)} ${s.delta>0?C.crimson+"▶":C.green+"◀"}${C.reset}${Math.abs(s.delta).toFixed(1)}`).join("  ")}`);
 }
 
-// ─── ENTRY POINT — 10-turn loop ───────────────────────────────────────────────
+// ─── ENTRY POINT — only runs when executed directly ───────────────────────────
 
-const bar = "═".repeat(68);
-console.log(`\n${C.bold}${C.white}${bar}`);
-console.log(`  POLIS — Multi-Turn Simulation  ·  0G Galileo  ·  Chain ID 16602`);
-console.log(`${bar}${C.reset}\n`);
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  const bar = "═".repeat(68);
+  console.log(`\n${C.bold}${C.white}${bar}`);
+  console.log(`  POLIS — Multi-Turn Simulation  ·  0G Galileo  ·  Chain ID 16602`);
+  console.log(`${bar}${C.reset}\n`);
 
-let state = initialWorldState();
+  let state = initialWorldState();
 
-for (let i = 0; i < 10; i++) {
-  console.log(`\n${C.bold}${C.white}${"─".repeat(68)}${C.reset}`);
-  console.log(`${C.bold}  === TURN ${i} ===${C.reset}`);
-  console.log(`${C.bold}${C.white}${"─".repeat(68)}${C.reset}`);
+  for (let i = 0; i < 10; i++) {
+    console.log(`\n${C.bold}${C.white}${"─".repeat(68)}${C.reset}`);
+    console.log(`${C.bold}  === TURN ${i} ===${C.reset}`);
+    console.log(`${C.bold}${C.white}${"─".repeat(68)}${C.reset}`);
 
-  state = await runTurn(state, {
-    type: "PLAYER_PROPOSAL",
-    data: null,
-  });
+    state = await runTurn(state, { type: "PLAYER_PROPOSAL", data: null });
 
-  printTurnSummary(i, state.worldState);
+    printTurnSummary(i, state.worldState);
 
-  console.log(`\n${C.dim}worldState:${C.reset}`);
-  console.log(JSON.stringify(state.worldState, null, 2));
+    console.log(`\n${C.dim}worldState:${C.reset}`);
+    console.log(JSON.stringify(state.worldState, null, 2));
+  }
+
+  console.log(`\n${C.bold}${C.green}Simulation complete — ${state.history.length} events archived to 0G memory.${C.reset}\n`);
 }
-
-console.log(`\n${C.bold}${C.green}Simulation complete — ${state.history.length} events archived to 0G memory.${C.reset}\n`);
