@@ -7,6 +7,7 @@ import { rotatingIndex } from "@/lib/use-live-pulse";
 const tabs = [
   { label: "Feed", to: "/" as const, exact: true },
   { label: "Proposals", to: "/proposals" as const, exact: false },
+  { label: "Propose", to: "/propose" as const, exact: false },
   { label: "Agents", to: "/agents" as const, exact: false },
   { label: "Memory", to: "/memory" as const, exact: false },
   { label: "Analytics", to: "/analytics" as const, exact: false },
