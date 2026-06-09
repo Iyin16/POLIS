@@ -254,6 +254,7 @@ export type FeedEventType =
   | "IdeologyShift"
   | "EmotionChange"
   | "MemoryArchived"
+  | "TurnSummary"
   | "AgentJoined";
 
 export type FeedPost = {
