@@ -1,6 +1,6 @@
 import type { WorldState } from "./world-state";
 import type { PolisState } from "./polis-store";
-import type { Agent, FeedPost, Memory, Proposal, ProposalCategory } from "./polis-data";
+import type { Agent, FeedPost, Memory, Proposal, ProposalCategory, ProposalLifecycle } from "./polis-data";
 
 const proposalCategories: ProposalCategory[] = ["Treasury", "Governance Reform", "Security", "Alliance", "Expansion"];
 
@@ -365,10 +365,10 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
         id,
         slug: id.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         title: String(data.title ?? "Untitled Proposal"),
-        status: "Proposed — waiting debate",
-        phase: "Proposed",
+        status: "Created — waiting debate",
+        phase: "Created",
         statusTag: "Active",
-        lifecycle: "Proposed",
+        lifecycle: "Created",
         summary: String(data.summary ?? "No summary provided."),
         description: String(data.description ?? data.summary ?? "No description."),
         votes: { for: 0, against: 0, abstain: 0 },
@@ -382,7 +382,7 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
           ? [{ agentId: author.id, position: "endorsed", statement: `Introduced by ${author.name} as a ${faction}-aligned motion.` }]
           : [],
         historicalReferences: data.category ? [{ memory: String(data.category), note: "Cited as precedent." }] : [],
-        upcoming: String(data.upcoming ?? "Floor debate scheduled next turn"),
+        upcoming: String(data.upcoming ?? "Debate begins next turn"),
       };
 
       return {
@@ -566,7 +566,7 @@ function resolveVotes(state: TurnState): TurnState {
     const majority = Math.max(1, Math.ceil(totalVotes * 0.5));
     const age = proposal.age ?? 0;
 
-    if (age < 2 && totalVotes === 0) {
+    if (age < 2) {
       return proposal;
     }
 
@@ -753,9 +753,10 @@ function evolveAgents(state: TurnState): TurnState {
     const influenceDelta = impactScore >= 3 ? 2 : impactScore === 2 ? 1 : impactScore === -1 ? -1 : impactScore <= -2 ? -2 : 0;
     const baseIdeology = agent.ideology.split(" — ")[0];
 
-    const relevantResolutions = agent.votingHistory
+    type ResolutionHistory = { entry: Agent["votingHistory"][number]; proposal: Proposal };
+  const relevantResolutions = agent.votingHistory
       .map((entry) => ({ entry, proposal: resolvedMap.get(entry.proposal) }))
-      .filter((item): item is { entry: { position: string }; proposal: Proposal } => Boolean(item.proposal));
+      .filter((item): item is ResolutionHistory => Boolean(item.proposal));
 
     const ideologyDriftValue = relevantResolutions.reduce((drift, item) => {
       const { entry, proposal } = item;
