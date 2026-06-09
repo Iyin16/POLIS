@@ -11,6 +11,9 @@ export interface WorldState {
   season: Season;
   totalAgents: number;
   emotion: 'Stable' | 'Tense' | 'Fragmenting' | 'Reforming';
+  volatility?: Record<string, number>;
+  stabilityTrend?: number[];
+  dominanceStreak?: number;
 }
 
 export function createWorldState(overrides?: Partial<WorldState>): WorldState {
@@ -23,6 +26,9 @@ export function createWorldState(overrides?: Partial<WorldState>): WorldState {
     season: 'spring',
     totalAgents: 0,
     emotion: 'Stable',
+    volatility: {},
+    stabilityTrend: [],
+    dominanceStreak: 0,
     ...overrides,
   };
 }

@@ -24,6 +24,13 @@ export type TurnHistoryEntry = {
   majorEvent?: string;
 };
 
+export type AgentEvolutionDetails = {
+  topIdeologyShifts: string[];
+  biggestTraitChange: string;
+  mostInfluentialAgent: string;
+  mostDistrustedAgent: string;
+};
+
 export type WorldSnapshot = {
   turn: number;
   worldState: any;
@@ -34,6 +41,7 @@ export type WorldSnapshot = {
   emotionState: "Stable" | "Tense" | "Fragmenting" | "Reforming";
   summary: string;
   agentEvolutionSummary?: string[];
+  agentEvolutionDetails?: AgentEvolutionDetails;
   activeProposal?: string;
   voteResult?: string;
   majorEvent?: string;
@@ -46,6 +54,7 @@ export type TurnState = PolisState & {
   proposals: Proposal[];
   history: TurnHistoryEntry[];
   agentEvolutionSummary?: string[];
+  agentEvolutionDetails?: AgentEvolutionDetails;
 };
 
 function cloneState(state: TurnState): TurnState {
@@ -633,6 +642,11 @@ function updateFactions(state: TurnState): TurnState {
 
   const activeProposals = state.proposals.filter((proposal) => proposal.statusTag === "Active");
   const resolvedProposals = state.proposals.filter((proposal) => proposal.statusTag !== "Active");
+  const priorDominant = state.worldState.dominantFaction;
+  const priorVolatility = state.worldState.volatility ?? {};
+  const priorStabilityTrend = state.worldState.stabilityTrend ?? [];
+  const previousStreak = state.worldState.dominanceStreak ?? 0;
+  const stabilityTrend = [...priorStabilityTrend, state.worldState.stability].slice(-6);
 
   activeProposals.forEach((proposal) => {
     if (proposal.category === "Security") {
@@ -651,33 +665,15 @@ function updateFactions(state: TurnState): TurnState {
     }
   });
 
-  if (state.turn === 3) {
-    counts.Technocrat = (counts.Technocrat ?? 0) + 28;
-    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 12);
-    counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 4;
-  }
-
-  if (state.turn === 4) {
-    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) - 20);
-    counts.Technocrat = (counts.Technocrat ?? 0) + 8;
-    counts.Populist = (counts.Populist ?? 0) + 10;
-  }
-
-  if (state.turn === 5) {
-    counts.Reformist = (counts.Reformist ?? 0) + 12;
-    counts.Technocrat = (counts.Technocrat ?? 0) + 12;
-    counts.Accelerationist = (counts.Accelerationist ?? 0) + 6;
-  }
-
-  if (state.turn === 6) {
-    counts.Technocrat = (counts.Technocrat ?? 0) + 24;
-    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 10);
-    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) + 4);
-  }
-
   resolvedProposals.forEach((proposal) => {
-    const supporters = proposal.agentReactions.filter((reaction) => reaction.position === "endorsed").map((reaction) => getAgentById(state, reaction.agentId)).filter(Boolean) as Agent[];
-    const opponents = proposal.agentReactions.filter((reaction) => reaction.position === "opposed").map((reaction) => getAgentById(state, reaction.agentId)).filter(Boolean) as Agent[];
+    const supporters = proposal.agentReactions
+      .filter((reaction) => reaction.position === "endorsed")
+      .map((reaction) => getAgentById(state, reaction.agentId))
+      .filter(Boolean) as Agent[];
+    const opponents = proposal.agentReactions
+      .filter((reaction) => reaction.position === "opposed")
+      .map((reaction) => getAgentById(state, reaction.agentId))
+      .filter(Boolean) as Agent[];
 
     if (proposal.statusTag === "Passed") {
       supporters.forEach((agent) => {
@@ -703,25 +699,77 @@ function updateFactions(state: TurnState): TurnState {
         counts[faction] = (counts[faction] ?? 0) + 4;
       });
     }
+
+    const totalVotes = proposal.votes.for + proposal.votes.against + proposal.votes.abstain;
+    if (totalVotes > 0) {
+      const margin = Math.abs(proposal.votes.for - proposal.votes.against);
+      const closeness = 1 - margin / Math.max(1, totalVotes);
+      if (closeness >= 0.55) {
+        const swing = Math.ceil(closeness * 8);
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const currentLeader = sorted[0]?.[0];
+        const challenger = sorted[1]?.[0];
+        if (currentLeader && challenger) {
+          counts[challenger] = (counts[challenger] ?? 0) + swing;
+          counts[currentLeader] = Math.max(0, (counts[currentLeader] ?? 0) - Math.ceil(swing / 2));
+        }
+      }
+    }
   });
+
+  if (state.turn === 3) {
+    counts.Technocrat = (counts.Technocrat ?? 0) + 18;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 4);
+    counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 3;
+  }
+
+  if (state.turn === 4) {
+    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) - 10);
+    counts.Technocrat = (counts.Technocrat ?? 0) + 6;
+    counts.Populist = (counts.Populist ?? 0) + 8;
+  }
+
+  if (state.turn === 5) {
+    counts.Reformist = (counts.Reformist ?? 0) + 10;
+    counts.Technocrat = (counts.Technocrat ?? 0) + 10;
+    counts.Accelerationist = (counts.Accelerationist ?? 0) + 5;
+  }
+
+  if (state.turn === 6) {
+    counts.Technocrat = (counts.Technocrat ?? 0) + 18;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 8);
+    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) + 3);
+  }
 
   const sortedFactions = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const dominantFaction = sortedFactions[0]?.[0] ?? null;
   const secondFaction = sortedFactions[1]?.[0];
   const gap = sortedFactions.length > 1 ? sortedFactions[0][1] - sortedFactions[1][1] : 0;
+  const dominanceStreak = dominantFaction === priorDominant ? previousStreak + 1 : 1;
+  const volatility = { ...priorVolatility };
 
-  if (activeProposals.length > 1 && secondFaction) {
-    counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
-    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
+  if (dominanceStreak >= 3 && dominantFaction) {
+    const pressure = 10 + (dominanceStreak - 2) * 3;
+    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - pressure);
+    volatility[dominantFaction] = Math.min(100, (volatility[dominantFaction] ?? 0) + pressure);
+    Object.keys(counts).forEach((faction) => {
+      if (faction !== dominantFaction) {
+        counts[faction] = (counts[faction] ?? 0) + 6;
+      }
+    });
   }
 
-  if (secondFaction && gap < 18) {
-    counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
-    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
-  }
+  Object.keys(counts).forEach((faction) => {
+    if (faction !== dominantFaction) {
+      counts[faction] = (counts[faction] ?? 0) + 2;
+      volatility[faction] = Math.max(0, (volatility[faction] ?? 0) - 1);
+    }
+  });
 
-  if (dominantFaction === "Reformist" && gap > 24) {
-    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 3);
+  if (secondFaction && gap < 14 && dominantFaction) {
+    counts[secondFaction] = (counts[secondFaction] ?? 0) + 4;
+    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
+    volatility[dominantFaction] = Math.min(100, (volatility[dominantFaction] ?? 0) + 4);
   }
 
   return {
@@ -730,6 +778,9 @@ function updateFactions(state: TurnState): TurnState {
     worldState: {
       ...state.worldState,
       dominantFaction,
+      volatility,
+      stabilityTrend,
+      dominanceStreak,
     },
   };
 }
@@ -806,25 +857,51 @@ function evolveAgents(state: TurnState): TurnState {
 function updateWorldEmotion(state: TurnState): WorldState & { totalAgents: number } {
   const totalReputation = state.agents.reduce((sum, agent) => sum + agent.reputation, 0);
   const averageReputation = state.agents.length ? totalReputation / state.agents.length : 50;
-  const powers = state.factions ? (Object.values(state.factions) as number[]) : [];
-  const sorted = [...powers].sort((a, b) => b - a);
-  const factionGap = sorted.length > 1 ? sorted[0] - sorted[1] : 0;
-  const conflictIntensity = sorted.length > 1 ? 1 - factionGap / Math.max(sorted[0], 1) : 0;
-  const passed = state.proposals.filter((proposal) => proposal.statusTag === "Passed").length;
-  const rejected = state.proposals.filter((proposal) => proposal.statusTag === "Rejected").length;
+  const resolved = state.proposals.filter((proposal) => proposal.statusTag !== "Active");
+  const closeVotes = resolved
+    .map((proposal) => {
+      const total = proposal.votes.for + proposal.votes.against + proposal.votes.abstain;
+      if (total === 0) return 0;
+      const margin = Math.abs(proposal.votes.for - proposal.votes.against);
+      return 1 - margin / Math.max(1, total);
+    })
+    .filter((value) => value > 0);
+  const averageCloseness = closeVotes.length ? closeVotes.reduce((sum, value) => sum + value, 0) / closeVotes.length : 0.25;
+  const betrayalEvents = state.proposals.reduce((count, proposal) => {
+    const factionReactions = proposal.agentReactions.reduce<Record<string, Set<string>>>((acc, reaction) => {
+      const agent = getAgentById(state, reaction.agentId);
+      if (!agent) return acc;
+      acc[agent.faction] = acc[agent.faction] ?? new Set();
+      acc[agent.faction].add(reaction.position);
+      return acc;
+    }, {});
+    Object.values(factionReactions).forEach((positions) => {
+      if (positions.has("endorsed") && positions.has("opposed")) count += 1;
+    });
+    return count;
+  }, 0);
 
-  const sentiment: WorldState["globalSentiment"] = averageReputation > 72 ? "positive" : averageReputation < 42 ? "negative" : "neutral";
+  const volatilityValues = Object.values(state.worldState.volatility ?? {});
+  const averageVolatility = volatilityValues.length ? volatilityValues.reduce((sum, value) => sum + value, 0) / volatilityValues.length : 0;
+  const stabilityTrend = state.worldState.stabilityTrend ?? [];
+  const trendDelta = stabilityTrend.length > 1 ? stabilityTrend[stabilityTrend.length - 1] - stabilityTrend[0] : 0;
+  const trendDirection = trendDelta >= 4 ? 1 : trendDelta <= -4 ? -1 : 0;
+
+  const conflictScore = Math.min(1, averageCloseness * 0.45 + averageVolatility / 110 + betrayalEvents * 0.12 + (trendDirection === -1 ? 0.08 : 0));
+  const unstableMomentum = averageVolatility > 30 || trendDirection <= 0;
   let emotion: WorldState["emotion"] = "Stable";
 
-  if (state.worldState.stability < 50 || conflictIntensity > 0.72 || rejected > passed) {
+  if (conflictScore > 0.55 || betrayalEvents >= 2 || averageVolatility > 45) {
     emotion = "Fragmenting";
-  } else if (state.worldState.stability < 56 || conflictIntensity > 0.58) {
+  } else if (conflictScore > 0.33 || betrayalEvents >= 1 || state.worldState.stability < 54) {
     emotion = "Tense";
-  } else if (state.worldState.stability < 68 || conflictIntensity > 0.45) {
+  } else if (unstableMomentum || state.worldState.stability < 74 || averageVolatility > 24) {
     emotion = "Reforming";
   } else {
     emotion = "Stable";
   }
+
+  const sentiment: WorldState["globalSentiment"] = averageReputation > 72 ? "positive" : averageReputation < 42 ? "negative" : "neutral";
 
   return {
     ...state.worldState,
