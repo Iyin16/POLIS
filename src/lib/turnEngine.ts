@@ -113,7 +113,7 @@ function getVotePosition(preference: string) {
 
 function shouldSpawnProposal(state: TurnState) {
   const active = state.proposals.some((proposal) => proposal.statusTag === "Active");
-  return !active || state.turn % 3 === 0;
+  return !active;
 }
 
 function createEngineProposal(state: TurnState, category: ProposalCategory): Proposal {
@@ -125,10 +125,10 @@ function createEngineProposal(state: TurnState, category: ProposalCategory): Pro
     id,
     slug,
     title,
-    status: "Proposed — waiting debate",
-    phase: "Proposed",
+    status: "Created — waiting debate",
+    phase: "Created",
     statusTag: "Active",
-    lifecycle: "Proposed",
+    lifecycle: "Created",
     age: 0,
     category,
     summary: `A ${category.toLowerCase()} proposal intended to shift the chamber's priorities.`,
@@ -142,7 +142,7 @@ function createEngineProposal(state: TurnState, category: ProposalCategory): Pro
     sentimentDelta: "+0.0",
     agentReactions: [],
     historicalReferences: [],
-    upcoming: "Floor debate scheduled next turn",
+    upcoming: "Debate begins next turn",
   };
 }
 
@@ -285,10 +285,10 @@ export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
   newState = resolveVotes(newState);
   newState = applyWorldChanges(newState);
   newState = updateFactions(newState);
-  newState = archiveResolvedProposals(newState);
   newState = evolveAgents(newState);
   newState.worldState = updateWorldEmotion(newState);
   newState.history = [...newState.history, createHistoryEntry(newState)];
+  newState = archiveResolvedProposals(newState);
 
   return newState;
 }
@@ -475,32 +475,42 @@ function processProposals(state: TurnState): TurnState {
     const totalVotes = support + opposition + proposal.votes.abstain;
     const sentiment = totalVotes > 0 ? Math.round((support / Math.max(1, totalVotes)) * 100) : 50;
     const age = (proposal.age ?? 0) + 1;
-    const lifecycle =
-      proposal.statusTag !== "Active"
-        ? proposal.lifecycle === "Archived"
-          ? "Archived"
-          : "Resolved"
-        : totalVotes > 0
-        ? "Voting"
-        : age === 1
-        ? "Debating"
-        : proposal.lifecycle === "Proposed"
-        ? "Debating"
-        : proposal.lifecycle ?? "Debating";
-    const debateStatus = proposal.statusTag !== "Active"
-      ? "Resolved — archived soon"
-      : totalVotes > 0
-      ? `Voting — ${totalVotes} votes tallied`
-      : age === 1
-      ? "Proposed — opening arguments"
-      : "Debating — arguments forming";
+    let lifecycle: ProposalLifecycle = proposal.lifecycle ?? "Created";
+    let status = proposal.status;
+    let phase = proposal.phase;
+    let upcoming = proposal.upcoming ?? "";
+
+    if (proposal.statusTag !== "Active") {
+      lifecycle = proposal.lifecycle === "Archived" ? "Archived" : "Resolved";
+      status = proposal.statusTag === "Passed" ? "Resolved — adopted" : proposal.statusTag === "Rejected" ? "Resolved — rejected" : "Resolved — deferred";
+      phase = "Resolved";
+      upcoming = "History archive pending";
+    } else {
+      if (age === 1) {
+        lifecycle = "Created";
+        status = "Created — proposal drafted";
+        phase = "Created";
+        upcoming = "Debate begins next turn";
+      } else if (age === 2) {
+        lifecycle = "Debated";
+        status = `Debated — ${totalVotes} reactions so far`;
+        phase = "Debate";
+        upcoming = totalVotes > 0 ? "Vote approaches" : "Build support before voting";
+      } else {
+        lifecycle = "Voted";
+        status = `Voted — ${totalVotes} tallied`;
+        phase = "Vote";
+        upcoming = "Resolution decision imminent";
+      }
+    }
 
     return {
       ...proposal,
-      status: debateStatus,
+      status,
       lifecycle,
-      phase: lifecycle === "Voting" ? "Floor Vote" : lifecycle === "Resolved" ? "Resolved" : "Debate",
+      phase,
       age,
+      upcoming,
       sentimentTrend: [...proposal.sentimentTrend.slice(-5), sentiment],
       sentimentDelta: `${sentiment - (proposal.sentimentTrend.slice(-1)[0] ?? 50)}.0`,
     };
@@ -556,25 +566,28 @@ function resolveVotes(state: TurnState): TurnState {
     const majority = Math.max(1, Math.ceil(totalVotes * 0.5));
     const age = proposal.age ?? 0;
 
-    if (age < 2) {
+    if (age < 2 && totalVotes === 0) {
       return proposal;
     }
 
-    if (totalVotes >= 4) {
-      if (support > opposition + 1) {
-        return { ...proposal, statusTag: "Passed", status: "Voting — Decision reached", lifecycle: "Resolved" };
-      }
-      if (opposition > support + 1) {
-        return { ...proposal, statusTag: "Rejected", status: "Voting — Decision reached", lifecycle: "Resolved" };
-      }
-      return { ...proposal, statusTag: "Tabled", status: "Voting — Narrow outcome", lifecycle: "Resolved" };
+    const readyToResolve = totalVotes >= 4 || age >= 3 || (totalVotes >= majority && support !== opposition);
+    if (!readyToResolve) {
+      return proposal;
     }
 
-    if (totalVotes >= majority && support !== opposition) {
-      return { ...proposal, statusTag: support > opposition ? "Passed" : "Rejected", status: "Voting — Decision reached", lifecycle: "Resolved" };
+    if (support > opposition + 1) {
+      return { ...proposal, statusTag: "Passed", status: "Voting — Decision reached", lifecycle: "Resolved" };
     }
 
-    return proposal;
+    if (opposition > support + 1) {
+      return { ...proposal, statusTag: "Rejected", status: "Voting — Decision reached", lifecycle: "Resolved" };
+    }
+
+    if (totalVotes === 0) {
+      return { ...proposal, statusTag: "Tabled", status: "Voted — No consensus", lifecycle: "Resolved" };
+    }
+
+    return { ...proposal, statusTag: "Tabled", status: "Voted — Narrow outcome", lifecycle: "Resolved" };
   });
 
   return {
@@ -722,6 +735,7 @@ function updateFactions(state: TurnState): TurnState {
 }
 
 function evolveAgents(state: TurnState): TurnState {
+  const resolvedMap = new Map(state.proposals.filter((proposal) => proposal.statusTag !== "Active" && proposal.lifecycle === "Resolved").map((proposal) => [proposal.id, proposal]));
   const shifts: { name: string; note: string; magnitude: number }[] = [];
   const ideologyMetric: Record<string, string> = {
     Reformist: "Collectivism",
@@ -737,12 +751,41 @@ function evolveAgents(state: TurnState): TurnState {
     const impactScore = supported - opposed;
     const reputationDelta = impactScore >= 2 ? 1 : impactScore <= -2 ? -1 : 0;
     const influenceDelta = impactScore >= 3 ? 2 : impactScore === 2 ? 1 : impactScore === -1 ? -1 : impactScore <= -2 ? -2 : 0;
+    const baseIdeology = agent.ideology.split(" — ")[0];
+
+    const relevantResolutions = agent.votingHistory
+      .map((entry) => ({ entry, proposal: resolvedMap.get(entry.proposal) }))
+      .filter((item): item is { entry: { position: string }; proposal: Proposal } => Boolean(item.proposal));
+
+    const ideologyDriftValue = relevantResolutions.reduce((drift, item) => {
+      const { entry, proposal } = item;
+      if (entry.position === "endorsed" && proposal.statusTag === "Passed") return drift + 2;
+      if (entry.position === "opposed" && proposal.statusTag === "Rejected") return drift + 1;
+      if (entry.position === "endorsed" && proposal.statusTag === "Rejected") return drift - 1;
+      if (entry.position === "opposed" && proposal.statusTag === "Passed") return drift - 1;
+      return drift;
+    }, 0);
+
+    let ideologyShift = baseIdeology;
+    if (relevantResolutions.length > 0) {
+      if (ideologyDriftValue >= 2) ideologyShift = `${baseIdeology} — hardened by recent resolution`;
+      else if (ideologyDriftValue === 1) ideologyShift = `${baseIdeology} — recalibrating stance`;
+      else if (ideologyDriftValue === 0) ideologyShift = `${baseIdeology} — steadied by chamber outcomes`;
+      else ideologyShift = `${baseIdeology} — challenged by recent outcomes`;
+    }
+
     const updatedAgent = {
       ...agent,
+      ideology: ideologyShift,
       reputation: Math.min(100, Math.max(0, agent.reputation + reputationDelta)),
       influence: Math.min(100, Math.max(0, agent.influence + influenceDelta)),
-      recentActivity: [`Evolved: ${reputationDelta >= 0 ? "gained" : "lost"} ${Math.abs(reputationDelta)} reputation, ${influenceDelta >= 0 ? "gained" : "lost"} ${Math.abs(influenceDelta)} influence.`, ...agent.recentActivity].slice(0, 4),
+      recentActivity: [
+        `Evolved: ${reputationDelta >= 0 ? "gained" : "lost"} ${Math.abs(reputationDelta)} reputation, ${influenceDelta >= 0 ? "gained" : "lost"} ${Math.abs(influenceDelta)} influence.`,
+        ...(relevantResolutions.length > 0 ? [`Ideology drift triggered by ${relevantResolutions.length} resolution${relevantResolutions.length > 1 ? "s" : ""}.`] : []),
+        ...agent.recentActivity,
+      ].slice(0, 4),
     };
+
     const metric = ideologyMetric[agent.faction] ?? "Trust";
     const delta = reputationDelta !== 0 ? reputationDelta * 1.3 : influenceDelta !== 0 ? influenceDelta * 1.1 : Math.sign(impactScore) * 0.8;
     const line = `${agent.name} ${metric} ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;

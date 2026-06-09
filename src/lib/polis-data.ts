@@ -329,7 +329,7 @@ export const feed: FeedPost[] = [
 
 export type ProposalCategory = "Treasury" | "Governance Reform" | "Security" | "Alliance" | "Expansion";
 
-export type ProposalLifecycle = "Proposed" | "Debating" | "Voting" | "Resolved" | "Archived";
+export type ProposalLifecycle = "Created" | "Debated" | "Voted" | "Resolved" | "Archived";
 
 export type Proposal = {
   id: string;
