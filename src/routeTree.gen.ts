@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppProposalsRouteImport } from './routes/_app.proposals'
 import { Route as AppMemoryRouteImport } from './routes/_app.memory'
 import { Route as AppForgeRouteImport } from './routes/_app.forge'
+import { Route as AppDominanceRouteImport } from './routes/_app.dominance'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as AppAgentsIndexRouteImport } from './routes/_app.agents.index'
@@ -43,6 +44,11 @@ const AppMemoryRoute = AppMemoryRouteImport.update({
 const AppForgeRoute = AppForgeRouteImport.update({
   id: '/forge',
   path: '/forge',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDominanceRoute = AppDominanceRouteImport.update({
+  id: '/dominance',
+  path: '/dominance',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/agents': typeof AppAgentsRouteWithChildren
   '/analytics': typeof AppAnalyticsRoute
+  '/dominance': typeof AppDominanceRoute
   '/forge': typeof AppForgeRoute
   '/memory': typeof AppMemoryRouteWithChildren
   '/proposals': typeof AppProposalsRouteWithChildren
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/analytics': typeof AppAnalyticsRoute
+  '/dominance': typeof AppDominanceRoute
   '/forge': typeof AppForgeRoute
   '/memory': typeof AppMemoryRouteWithChildren
   '/proposals': typeof AppProposalsRouteWithChildren
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/agents': typeof AppAgentsRouteWithChildren
   '/_app/analytics': typeof AppAnalyticsRoute
+  '/_app/dominance': typeof AppDominanceRoute
   '/_app/forge': typeof AppForgeRoute
   '/_app/memory': typeof AppMemoryRouteWithChildren
   '/_app/proposals': typeof AppProposalsRouteWithChildren
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agents'
     | '/analytics'
+    | '/dominance'
     | '/forge'
     | '/memory'
     | '/proposals'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/analytics'
+    | '/dominance'
     | '/forge'
     | '/memory'
     | '/proposals'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_app/agents'
     | '/_app/analytics'
+    | '/_app/dominance'
     | '/_app/forge'
     | '/_app/memory'
     | '/_app/proposals'
@@ -191,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/forge'
       fullPath: '/forge'
       preLoaderRoute: typeof AppForgeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dominance': {
+      id: '/_app/dominance'
+      path: '/dominance'
+      fullPath: '/dominance'
+      preLoaderRoute: typeof AppDominanceRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/analytics': {
@@ -279,6 +298,7 @@ const AppProposalsRouteWithChildren = AppProposalsRoute._addFileChildren(
 interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppDominanceRoute: typeof AppDominanceRoute
   AppForgeRoute: typeof AppForgeRoute
   AppMemoryRoute: typeof AppMemoryRouteWithChildren
   AppProposalsRoute: typeof AppProposalsRouteWithChildren
@@ -288,6 +308,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAgentsRoute: AppAgentsRouteWithChildren,
   AppAnalyticsRoute: AppAnalyticsRoute,
+  AppDominanceRoute: AppDominanceRoute,
   AppForgeRoute: AppForgeRoute,
   AppMemoryRoute: AppMemoryRouteWithChildren,
   AppProposalsRoute: AppProposalsRouteWithChildren,
