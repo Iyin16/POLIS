@@ -14,10 +14,10 @@ function factionStyle(faction: string) {
   return { color: "#94a3b8", pattern: "muted", style: "Neutral" };
 }
 
-export async function generateAgentPortrait(agent: { id: string; slug?: string; name?: string; faction?: string; influence?: number }): Promise<PortraitResult> {
-  const seed = `${agent.id}-${agent.slug ?? "agent"}`;
+export function generateAgentPortrait(agent: { id: string; slug?: string; name?: string; faction?: string; influence?: number; emotion?: string; portraitSeed?: string }): PortraitResult {
+  const seed = agent.portraitSeed ?? `${agent.id}-${agent.slug ?? "agent"}`;
   const info = factionStyle(agent.faction ?? "Neutral");
-  const influence = Math.max(10, Math.min(100, Math.round(agent.influence ?? 40)));
+  const influence = Math.max(10, Math.min(100, Math.round(agent.influence ?? 40))); // uses current influence to subtly alter visuals
 
   const bg = info.color;
   const opacity = 0.3 + (influence / 200);

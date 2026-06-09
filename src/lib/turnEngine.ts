@@ -16,6 +16,7 @@ import {
   createAgentJoinedEvent,
   createFeedEvent,
 } from "./feed-events";
+import { generateAgentPortrait } from "./portrait";
 
 const proposalCategories: ProposalCategory[] = ["Treasury", "Governance Reform", "Security", "Alliance", "Expansion"];
 
@@ -1079,14 +1080,25 @@ function applyInfluenceEngine(state: TurnState, priorFactionInfluence: Record<st
     factionCohesion,
   } as any;
 
+  // Regenerate portraits to reflect updated influence/faction/emotion
+  const agentsWithPortraits = updatedAgents.map((agent) => {
+    try {
+      const portrait = generateAgentPortrait({ ...agent, portraitSeed: (agent as any).portraitSeed });
+      return { ...agent, portraitUri: portrait.uri, portraitSeed: (agent as any).portraitSeed ?? portrait.seed, portraitStyle: portrait.style };
+    } catch (e) {
+      return agent;
+    }
+  });
+
   return {
     ...state,
-    agents: updatedAgents,
+    agents: agentsWithPortraits,
     factions: factionTotals,
     worldState: newWorldState,
     feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 200) : state.feed,
   };
 }
+
 
 function evolveAgents(state: TurnState): TurnState {
   const resolvedMap = new Map(state.proposals.filter((proposal) => proposal.statusTag !== "Active" && proposal.lifecycle === "Resolved").map((proposal) => [proposal.id, proposal]));

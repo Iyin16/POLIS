@@ -221,9 +221,9 @@ export async function createAgentInPolisSimulation(input: {
     rank,
   };
 
-  // Generate an AI-style portrait synchronously (deterministic SVG data URI)
+  // Generate an AI-style portrait deterministically (SVG data URI)
   try {
-    const portrait = await generateAgentPortrait(newAgent as any);
+    const portrait = generateAgentPortrait(newAgent as any);
     newAgent.portraitUri = portrait.uri;
     newAgent.portraitSeed = portrait.seed;
     newAgent.portraitStyle = portrait.style;
