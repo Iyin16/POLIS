@@ -9,6 +9,8 @@ export type Agent = {
   faction: string;
   reputation: number;
   influence: number;
+  influenceTrend?: "rising" | "falling" | "stable";
+  influenceHistory?: number[];
   traits: string[];
   status: "deliberating" | "drafting" | "voting" | "idle";
   initials: string;

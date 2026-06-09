@@ -281,9 +281,10 @@ function simulateProposalVoting(state: TurnState): TurnState {
       const position = getVotePosition(preference);
       const voteNote = `${agent.name} ${position === "endorsed" ? "supports" : position === "opposed" ? "opposes" : "abstains from"} ${proposal.id}.`;
 
-      if (position === "endorsed") votes.for += 1;
-      if (position === "opposed") votes.against += 1;
-      if (position === "abstained") votes.abstain += 1;
+      const weight = computeVoteWeight(agent, proposal.category, state);
+      if (position === "endorsed") votes.for += weight;
+      if (position === "opposed") votes.against += weight;
+      if (position === "abstained") votes.abstain += Math.max(1, Math.round(weight * 0.25));
 
       agentReactions.push({ agentId: agent.id, position, statement: voteNote });
       voteAdditions[agent.id] = voteAdditions[agent.id] ?? [];
@@ -324,6 +325,7 @@ function simulateProposalVoting(state: TurnState): TurnState {
 export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
   const priorDominant = state.worldState?.dominantFaction ?? null;
   const priorEmotion = state.worldState?.emotion ?? (state.worldState as any)?.globalSentiment ?? "Stable";
+  const priorFactionInfluence = { ...(state.factions ?? {}) };
 
   let newState = cloneState(state);
   newState.turn = (state.turn ?? 0) + 1;
@@ -339,6 +341,8 @@ export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
   newState = resolveVotes(newState);
   newState = applyWorldChanges(newState);
   newState = updateFactions(newState);
+  // Apply influence engine after factions update so dominance is current
+  newState = applyInfluenceEngine(newState, priorFactionInfluence);
   newState = evolveAgents(newState);
   newState.worldState = updateWorldEmotion(newState);
   // Emit world emotion change event if emotion changed
@@ -914,6 +918,173 @@ function updateFactions(state: TurnState): TurnState {
       stabilityTrend,
       dominanceStreak,
     },
+  };
+}
+
+// --- Influence Engine Helpers -------------------------------------------------
+function computeVoteWeight(agent: Agent, proposalCategory?: ProposalCategory, state?: TurnState) {
+  const base = agent.influence ?? 40;
+  // faction-category alignment heuristic
+  const categoryFactionMap: Record<string, string> = {
+    Treasury: "Sovereigntist",
+    "Governance Reform": "Reformist",
+    Security: "Technocrat",
+    Alliance: "Reformist",
+    Expansion: "Accelerationist",
+  };
+  const alignedFaction = proposalCategory ? (categoryFactionMap[proposalCategory] ?? "") : "";
+  const alignmentMultiplier = alignedFaction && agent.faction === alignedFaction ? 1.15 : 0.95;
+
+  // ideologyConfidence derived from reputation (proxy) and recent voting consistency
+  const reputationFactor = Math.max(0.6, Math.min(1.2, (agent.reputation ?? 50) / 70));
+  const recentVotes = (agent.votingHistory ?? []).slice(-4).length || 1;
+  const consistencyFactor = 1 + Math.min(0.18, recentVotes * 0.03);
+
+  const weight = base * alignmentMultiplier * reputationFactor * consistencyFactor;
+  return Math.max(1, Math.round(weight));
+}
+
+function applyInfluenceEngine(state: TurnState, priorFactionInfluence: Record<string, number>): TurnState {
+  const resolvedThisTurn = state.proposals.filter((p) => p.resolvedTurn === state.turn && p.statusTag !== "Active");
+  const feedUpdates: FeedPost[] = [];
+
+  // Map faction -> agents
+  const factionAgents: Record<string, Agent[]> = {};
+  state.agents.forEach((a) => {
+    factionAgents[a.faction] = factionAgents[a.faction] ?? [];
+    factionAgents[a.faction].push(a);
+  });
+
+  const agentDeltas = new Map<string, number>();
+
+  // Influence from resolved proposal outcomes
+  resolvedThisTurn.forEach((proposal) => {
+    state.agents.forEach((agent) => {
+      const voteEntry = agent.votingHistory.slice().reverse().find((v) => v.proposal === proposal.id);
+      if (!voteEntry) return;
+      let delta = 0;
+      if (proposal.statusTag === "Passed") {
+        if (voteEntry.position === "endorsed") delta += 1 + Math.round(agent.influence * 0.02);
+        if (voteEntry.position === "opposed") delta -= 1 + Math.round(agent.influence * 0.03);
+      }
+      if (proposal.statusTag === "Rejected") {
+        if (voteEntry.position === "opposed") delta += 1 + Math.round(agent.influence * 0.015);
+        if (voteEntry.position === "endorsed") delta -= 1 + Math.round(agent.influence * 0.02);
+      }
+      if (Math.abs(delta) > 0) {
+        agentDeltas.set(agent.id, (agentDeltas.get(agent.id) ?? 0) + delta);
+      }
+    });
+  });
+
+  // Inactivity decay: small loss if no recent activity logged
+  state.agents.forEach((agent) => {
+    const recent = (agent.recentActivity ?? [])[0] ?? "";
+    const inactive = !recent || recent.toLowerCase().includes("entered") || recent.toLowerCase().includes("observed") ? false : false;
+    // Simple heuristic: if agent has no voting history at all, decay faster
+    if ((agent.votingHistory ?? []).length === 0) {
+      agentDeltas.set(agent.id, (agentDeltas.get(agent.id) ?? 0) - 0.5);
+    }
+    // gentle decay for everyone to prevent permanence
+    agentDeltas.set(agent.id, (agentDeltas.get(agent.id) ?? 0) - 0.15);
+  });
+
+  // Apply deltas with diminishing returns and caps
+  const updatedAgents = state.agents.map((agent) => {
+    const deltaRaw = agentDeltas.get(agent.id) ?? 0;
+    // diminishing returns after 80
+    const scale = agent.influence >= 80 ? 0.5 : 1;
+    const delta = Math.sign(deltaRaw) * Math.round(Math.abs(deltaRaw) * scale);
+    if (delta === 0) return agent;
+
+    const oldInfluence = agent.influence;
+    let newInfluence = Math.min(100, Math.max(0, Math.round(oldInfluence + delta)));
+
+    // enforce soft cap damping beyond 90
+    if (newInfluence > 90) newInfluence = Math.round(90 + (newInfluence - 90) * 0.6);
+
+    // update agent history and trend
+    const history = (agent.influenceHistory ?? []).slice(-19);
+    history.push(newInfluence);
+    const trend: Agent["influenceTrend"] = newInfluence > oldInfluence ? "rising" : newInfluence < oldInfluence ? "falling" : "stable";
+
+    // emit feed event for this influence shift
+    const ev = createInfluenceShiftEvent(agent.name, agent.id, oldInfluence, newInfluence, state.turn);
+    feedUpdates.push(ev);
+
+    return {
+      ...agent,
+      influence: newInfluence,
+      influenceHistory: history,
+      influenceTrend: trend,
+    };
+  });
+
+  // Recompute faction totals and cohesion
+  const factionTotals: Record<string, number> = {};
+  Object.keys(factionAgents).forEach((f) => {
+    factionTotals[f] = updatedAgents.filter((a) => a.faction === f).reduce((s, a) => s + a.influence, 0);
+  });
+
+  const totalInfluence = Object.values(factionTotals).reduce((s, v) => s + v, 0) || 1;
+  const dominancePercent: Record<string, number> = {};
+  Object.entries(factionTotals).forEach(([f, val]) => {
+    dominancePercent[f] = Math.round((val / totalInfluence) * 1000) / 10; // 1 decimal percent
+  });
+
+  // Cohesion: fraction of faction voting aligned with faction majority on resolvedThisTurn
+  const factionCohesion: Record<string, number> = {};
+  Object.keys(factionAgents).forEach((f) => {
+    const agentsInFaction = factionAgents[f];
+    if (agentsInFaction.length === 0) { factionCohesion[f] = 1; return; }
+    let disagreements = 0;
+    resolvedThisTurn.forEach((proposal) => {
+      // compute faction majority for this proposal
+      const votes = agentsInFaction.map((a) => a.votingHistory.slice().reverse().find((v) => v.proposal === proposal.id)?.position).filter(Boolean as any) as string[];
+      if (votes.length === 0) return;
+      const endorsed = votes.filter((v) => v === "endorsed").length;
+      const opposed = votes.filter((v) => v === "opposed").length;
+      const majority = endorsed >= opposed ? "endorsed" : "opposed";
+      agentsInFaction.forEach((agent) => {
+        const entry = agent.votingHistory.slice().reverse().find((v) => v.proposal === proposal.id);
+        if (!entry) return;
+        if ((entry.position === "endorsed" && majority !== "endorsed") || (entry.position === "opposed" && majority !== "opposed")) disagreements += 1;
+      });
+    });
+    const maxChecks = Math.max(1, agentsInFaction.length * Math.max(1, resolvedThisTurn.length));
+    const cohesion = Math.max(0, 1 - disagreements / maxChecks);
+    factionCohesion[f] = Math.round(cohesion * 100) / 100;
+  });
+
+  // Emit dominance shift events if >5% change from priorFactionInfluence
+  const priorTotal = Object.values(priorFactionInfluence).reduce((s, v) => s + v, 0) || 1;
+  const priorLeader = Object.entries(priorFactionInfluence).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  Object.entries(dominancePercent).forEach(([f, percent]) => {
+    const prior = priorFactionInfluence?.[f] ?? 0;
+    const priorPct = Math.round((prior / priorTotal) * 1000) / 10;
+    if (Math.abs(percent - priorPct) > 5) {
+      const repId = updatedAgents.find((a) => a.faction === f)?.id ?? updatedAgents[0]?.id ?? "";
+      feedUpdates.push(createDominanceChangeEvent(priorLeader, f, state.turn, repId));
+      // bump world tension
+      state.worldState = { ...state.worldState, tension: Math.min(100, (state.worldState as any).tension ? (state.worldState as any).tension + 6 : 6) } as any;
+    }
+  });
+
+  // Update worldState totals
+  const newWorldState = {
+    ...state.worldState,
+    totalInfluence,
+    factionInfluence: factionTotals,
+    factionDominance: dominancePercent,
+    factionCohesion,
+  } as any;
+
+  return {
+    ...state,
+    agents: updatedAgents,
+    factions: factionTotals,
+    worldState: newWorldState,
+    feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 200) : state.feed,
   };
 }
 
