@@ -308,6 +308,25 @@ export function createTurnSummaryEvent(
   );
 }
 
+export function createAgentMintedEvent(
+  agentName: string,
+  agentId: string,
+  tokenId: number,
+  contractAddress: string,
+  ownerAddress: string,
+  turn: number,
+): FeedPost {
+  return createFeedEvent(
+    "AgentMinted",
+    `${agentName} Sovereignty Established On-Chain`,
+    `${agentName} has been minted as a sovereign political identity on Arbitrum. Token ID: ${tokenId}. Owner: ${ownerAddress}. Contract: ${contractAddress}`,
+    [agentId],
+    "Critical",
+    turn,
+    agentId,
+  );
+}
+
 export function createAgentJoinedEvent(
   agentName: string,
   agentId: string,

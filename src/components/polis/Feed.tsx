@@ -29,6 +29,7 @@ const eventTypeIcons: Record<FeedEventType, React.ReactNode> = {
   EmotionChange: "🌊",
   MemoryArchived: "📚",
   TurnSummary: "📰",
+  AgentMinted: "💎",
   AgentJoined: "🎭",
 };
 

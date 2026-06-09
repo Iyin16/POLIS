@@ -11,6 +11,9 @@ export type Agent = {
   influence: number;
   influenceTrend?: "rising" | "falling" | "stable";
   influenceHistory?: number[];
+  nftTokenId?: number;
+  nftAddress?: string;
+  nftMintedAt?: number;
   traits: string[];
   status: "deliberating" | "drafting" | "voting" | "idle";
   initials: string;
@@ -257,7 +260,8 @@ export type FeedEventType =
   | "EmotionChange"
   | "MemoryArchived"
   | "TurnSummary"
-  | "AgentJoined";
+  | "AgentJoined"
+  | "AgentMinted";
 
 export type FeedPost = {
   id: string;
