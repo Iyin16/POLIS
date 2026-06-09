@@ -1,6 +1,20 @@
 import type { WorldState } from "./world-state";
 import type { PolisState } from "./polis-store";
 import type { Agent, FeedPost, Memory, Proposal, ProposalCategory, ProposalLifecycle, ProposalOrigin } from "./polis-data";
+import {
+  createProposalCreatedEvent,
+  createProposalDebateEvent,
+  createProposalVotingEvent,
+  createProposalPassedEvent,
+  createProposalFailedEvent,
+  createAgentReactionEvent,
+  createInfluenceShiftEvent,
+  createDominanceChangeEvent,
+  createEmotionChangeEvent,
+  createMemoryArchivedEvent,
+  createAgentJoinedEvent,
+  createFeedEvent,
+} from "./feed-events";
 
 const proposalCategories: ProposalCategory[] = ["Treasury", "Governance Reform", "Security", "Alliance", "Expansion"];
 
@@ -211,10 +225,20 @@ function archiveResolvedProposals(state: TurnState): TurnState {
   if (archived.length === 0) return state;
 
   const archivedMemories = archived.map((proposal) => createMemoryFromProposal(state, proposal));
+  const feedUpdates: FeedPost[] = archivedMemories.map((memory) =>
+    createMemoryArchivedEvent(
+      memory.title,
+      memory.summary,
+      state.agents[0]?.id ?? "",
+      state.turn,
+    ),
+  );
+
   return {
     ...state,
     proposals: state.proposals.filter((proposal) => proposal.lifecycle !== "Archived"),
     memories: [...state.memories, ...archivedMemories],
+    feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 50) : state.feed,
   };
 }
 
@@ -229,29 +253,19 @@ function maybeGenerateProposal(state: TurnState): TurnState {
     description: `New ${proposal.origin.toLowerCase()} ${category.toLowerCase()} proposal introduced to the chamber.`,
   };
 
+  const feedEvent = createProposalCreatedEvent(proposal, proposal.proposerId ?? state.agents[0]?.id ?? "", state.turn);
+
   return {
     ...state,
     proposals: [proposal, ...state.proposals],
     events: [event, ...(state.events ?? [])].slice(0, 8),
-    feed: [
-      {
-        id: `p-turn-${Date.now()}`,
-        agentId: proposal.proposerId ?? state.agents[0]?.id ?? "",
-        proposal: proposal.id,
-        timestamp: "just now",
-        stance: "support",
-        content: `A new ${proposal.origin.toLowerCase()} ${category.toLowerCase()} proposal, ${proposal.title}, has entered the agenda.`,
-        memoryRef: proposal.memoryTags?.[0],
-        reactions: [{ type: "Aligned", count: 18 }],
-        replies: [],
-      },
-      ...state.feed,
-    ],
+    feed: [feedEvent, ...state.feed].slice(0, 50),
   };
 }
 
 function simulateProposalVoting(state: TurnState): TurnState {
   const voteAdditions: Record<string, { proposalId: string; position: "endorsed" | "opposed" | "abstained"; note: string }[]> = {};
+  const feedUpdates: FeedPost[] = [];
 
   const proposals = state.proposals.map((proposal) => {
     if (proposal.statusTag !== "Active") return proposal;
@@ -273,6 +287,13 @@ function simulateProposalVoting(state: TurnState): TurnState {
       agentReactions.push({ agentId: agent.id, position, statement: voteNote });
       voteAdditions[agent.id] = voteAdditions[agent.id] ?? [];
       voteAdditions[agent.id].push({ proposalId: proposal.id, position, note: voteNote });
+
+      // Create a feed event for agent reaction with lower frequency to avoid spam
+      if (Math.random() < 0.4) {
+        feedUpdates.push(
+          createAgentReactionEvent(agent.name, agent.id, proposal, position, voteNote, state.turn),
+        );
+      }
     });
 
     return {
@@ -295,6 +316,7 @@ function simulateProposalVoting(state: TurnState): TurnState {
         ...(voteAdditions[agent.id] ?? []).map((vote) => ({ proposal: vote.proposalId, position: vote.position, note: vote.note })),
       ],
     })),
+    feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 50) : state.feed,
   };
 }
 
@@ -360,17 +382,7 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
         ...state,
         agents: [newAgent, ...state.agents],
         feed: [
-          {
-            id: `agent-create-${Date.now()}`,
-            agentId: newAgent.id,
-            proposal: "",
-            timestamp: "just now",
-            stance: "support",
-            content: `${newAgent.name} joined the Polis chamber as a new participant.`,
-            memoryRef: undefined,
-            reactions: [{ type: "Aligned", count: 12 }],
-            replies: [],
-          },
+          createAgentJoinedEvent(newAgent.name, newAgent.id, newAgent.faction, state.turn),
           ...state.feed,
         ],
       };
@@ -431,19 +443,9 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
         ...state,
         proposals: [newProposal, ...state.proposals],
         feed: [
-          {
-            id: `p-turn-${Date.now()}`,
-            agentId: author?.id ?? "",
-            proposal: newProposal.id,
-            timestamp: "just now",
-            stance: "support",
-            content: `${proposerName} submitted ${newProposal.title} to the chamber. ${newProposal.summary}`,
-            memoryRef: data.category,
-            reactions: [{ type: "Aligned", count: 32 }],
-            replies: [],
-          },
+          createProposalCreatedEvent(newProposal, author?.id ?? "", state.turn),
           ...state.feed,
-        ],
+        ].slice(0, 50),
       };
     }
 
@@ -511,6 +513,7 @@ function applyPlayerAction(state: TurnState, playerAction: PlayerAction): TurnSt
 }
 
 function processProposals(state: TurnState): TurnState {
+  const feedUpdates: FeedPost[] = [];
   const proposals = state.proposals.map((proposal) => {
     const support = proposal.votes.for;
     const opposition = proposal.votes.against;
@@ -545,11 +548,23 @@ function processProposals(state: TurnState): TurnState {
         status = `Debated — ${totalVotes} reactions so far`;
         phase = "Debate";
         upcoming = totalVotes > 0 ? "Vote approaches" : "Build support before voting";
+        // Generate debate event when transitioning to debate phase
+        if (proposal.lifecycle !== "Debated" && proposal.lifecycle !== "Voted") {
+          feedUpdates.push(
+            createProposalDebateEvent(proposal, proposal.proposerId ?? state.agents[0]?.id ?? "", state.turn),
+          );
+        }
       } else if (age === 3) {
         lifecycle = "Voted";
         status = `Voting — ${totalVotes} tallied`;
         phase = "Vote";
         upcoming = "Resolution decision imminent";
+        // Generate voting event when transitioning to voting phase
+        if (proposal.lifecycle !== "Voted") {
+          feedUpdates.push(
+            createProposalVotingEvent(proposal, proposal.proposerId ?? state.agents[0]?.id ?? "", state.turn),
+          );
+        }
       } else {
         lifecycle = "Voted";
         status = `Voting — finalizing outcome`;
@@ -576,6 +591,7 @@ function processProposals(state: TurnState): TurnState {
   return {
     ...state,
     proposals,
+    feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 50) : state.feed,
   };
 }
 
@@ -614,6 +630,7 @@ function processAgentBehavior(state: TurnState): TurnState {
 }
 
 function resolveVotes(state: TurnState): TurnState {
+  const feedUpdates: FeedPost[] = [];
   const proposals: Proposal[] = state.proposals.map((proposal) => {
     if (proposal.statusTag !== "Active") return proposal;
 
@@ -633,8 +650,9 @@ function resolveVotes(state: TurnState): TurnState {
     }
 
     const resolvedTurn = state.turn;
+    let resolved: Proposal | null = null;
     if (support > opposition + 1) {
-      return {
+      resolved = {
         ...proposal,
         statusTag: "Passed",
         status: "Voting — Decision reached",
@@ -642,10 +660,11 @@ function resolveVotes(state: TurnState): TurnState {
         outcome: "Passed",
         resolvedTurn,
       };
-    }
-
-    if (opposition > support + 1) {
-      return {
+      feedUpdates.push(
+        createProposalPassedEvent(resolved, proposal.proposerId ?? state.agents[0]?.id ?? "", state.turn, proposal.votes),
+      );
+    } else if (opposition > support + 1) {
+      resolved = {
         ...proposal,
         statusTag: "Rejected",
         status: "Voting — Decision reached",
@@ -653,10 +672,11 @@ function resolveVotes(state: TurnState): TurnState {
         outcome: "Rejected",
         resolvedTurn,
       };
-    }
-
-    if (totalVotes === 0) {
-      return {
+      feedUpdates.push(
+        createProposalFailedEvent(resolved, proposal.proposerId ?? state.agents[0]?.id ?? "", state.turn, proposal.votes),
+      );
+    } else if (totalVotes === 0) {
+      resolved = {
         ...proposal,
         statusTag: "Tabled",
         status: "Voted — No consensus",
@@ -664,21 +684,24 @@ function resolveVotes(state: TurnState): TurnState {
         outcome: "Tabled",
         resolvedTurn,
       };
+    } else {
+      resolved = {
+        ...proposal,
+        statusTag: "Tabled",
+        status: "Voted — Narrow outcome",
+        lifecycle: "Resolved",
+        outcome: "Tabled",
+        resolvedTurn,
+      };
     }
 
-    return {
-      ...proposal,
-      statusTag: "Tabled",
-      status: "Voted — Narrow outcome",
-      lifecycle: "Resolved",
-      outcome: "Tabled",
-      resolvedTurn,
-    };
+    return resolved;
   });
 
   return {
     ...state,
     proposals,
+    feed: feedUpdates.length > 0 ? [...feedUpdates, ...state.feed].slice(0, 50) : state.feed,
   };
 }
 

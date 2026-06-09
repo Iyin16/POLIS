@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { agentStatusUpdates, deepThreads, proposalById, type FeedPost } from "@/lib/polis-data";
+import { agentStatusUpdates, deepThreads, proposalById, type FeedPost, type FeedEventType } from "@/lib/polis-data";
 import { usePolisStore } from "@/lib/polis-store";
 import { AgentAvatar } from "./AgentAvatar";
 import { AgentLink, EntityText, ProposalLink } from "./EntityText";
-import { ArrowUpRight, BookMarked, ChevronDown, ChevronRight, MessageSquare, Radio, Repeat2 } from "lucide-react";
+import { ArrowUpRight, BookMarked, ChevronDown, ChevronRight, MessageSquare, Radio, Repeat2, AlertCircle, TrendingUp, Users, Archive } from "lucide-react";
 import { rotatingIndex } from "@/lib/use-live-pulse";
 
 const stanceMap = {
@@ -12,6 +12,31 @@ const stanceMap = {
   amend: { label: "Amends", color: "text-cyan border-cyan/40 bg-cyan/5" },
   neutral: { label: "Observes", color: "text-silver border-silver/30 bg-silver/5" },
 } as const;
+
+const eventTypeIcons: Record<FeedEventType, React.ReactNode> = {
+  ProposalCreated: "📋",
+  ProposalDebate: "💬",
+  ProposalVoting: "🗳️",
+  ProposalPassed: "✅",
+  ProposalFailed: "❌",
+  AgentReaction: "👤",
+  FactionPosition: "🏛️",
+  AllianceFormed: "🤝",
+  Betrayal: "⚡",
+  InfluenceShift: "📈",
+  DominanceChange: "👑",
+  IdeologyShift: "💡",
+  EmotionChange: "🌊",
+  MemoryArchived: "📚",
+  AgentJoined: "🎭",
+};
+
+const impactColors: Record<string, string> = {
+  Low: "text-cyan border-cyan/40 bg-cyan/5",
+  Medium: "text-amber border-amber/40 bg-amber/5",
+  High: "text-crimson border-crimson/40 bg-crimson/5",
+  Critical: "text-crimson border-crimson/60 bg-crimson/10",
+};
 
 export function Feed() {
   const { feed, agents } = usePolisStore();
@@ -27,7 +52,7 @@ export function Feed() {
           <h1 className="font-serif text-xl md:text-2xl tracking-tight mt-1">Governance Debate Feed</h1>
         </div>
         <div className="flex flex-wrap gap-1 text-[11px]">
-          {["All", "Deliberations", "Memos", "Coalitions"].map((f, i) => (
+          {["All", "Deliberations", "Proposals", "Events"].map((f, i) => (
             <button
               key={f}
               className={`px-2.5 py-1 rounded-sm border hairline ${i === 0 ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
@@ -61,12 +86,66 @@ function AgentStatusPill({ agentId }: { agentId: string }) {
 
 function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any> }) {
   const agent = agentMap[post.agentId];
-  const stance = stanceMap[post.stance];
+  const isNewFormat = post.type && post.title && post.description;
+  const stance = post.stance ? stanceMap[post.stance] : null;
   const inline = post.replies ?? [];
   const deeper = deepThreads[post.id] ?? [];
   const totalReplies = inline.length + deeper.length;
   const [expanded, setExpanded] = useState(false);
 
+  if (isNewFormat) {
+    // New political feed event format
+    return (
+      <article className="panel card-lift rounded-md p-4 md:p-5 fade-in border-l-4 border-l-amber">
+        <div className="flex items-start gap-3">
+          <div className="text-2xl shrink-0">{eventTypeIcons[post.type] || "📰"}</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="font-serif text-[16px] font-semibold text-foreground">{post.title}</h3>
+              <span className={`rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] font-mono ${impactColors[post.impactLevel] || "text-muted-foreground"}`}>
+                {post.impactLevel} Impact
+              </span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="font-mono text-[10.5px] text-muted-foreground/50">Turn {post.turn}</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="font-mono text-[10.5px] text-muted-foreground/50">{post.timestamp} ago</span>
+            </div>
+
+            <p className="mt-2 text-[14.5px] leading-relaxed text-foreground/90">
+              {post.description}
+            </p>
+
+            {post.actors && post.actors.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {post.actors.map((actorId) => {
+                  const actor = agentMap[actorId];
+                  return actor ? (
+                    <AgentLink key={actorId} slug={actor.slug} className="inline-flex items-center gap-1.5 rounded-sm border hairline bg-background/40 px-2 py-1">
+                      <AgentAvatar agent={actor} size={20} />
+                      <span className="text-[11px] font-medium">{actor.name}</span>
+                    </AgentLink>
+                  ) : null;
+                })}
+              </div>
+            )}
+
+            {post.proposal && (
+              <div className="mt-3">
+                <ProposalLink id={post.proposal} className="inline-flex items-center gap-1.5 text-[11px] font-mono text-amber hover:underline">
+                  Related: {post.proposal}
+                  <ArrowUpRight className="h-3 w-3" />
+                </ProposalLink>
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // Legacy format (agent discussion posts)
+  if (!agent) return null;
+  
   return (
     <article className="panel card-lift rounded-md p-4 md:p-5 fade-in">
       <div className="flex items-start gap-3">
@@ -81,16 +160,18 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
             <span className="font-mono text-[10.5px] text-muted-foreground/60">{agent.handle}</span>
             <span className="text-muted-foreground/30">·</span>
             <span className="font-mono text-[10.5px] text-muted-foreground/50">{post.timestamp} ago</span>
-            <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
-              {stance.label} ·{" "}
-              {proposalById[post.proposal] ? (
-                <ProposalLink id={post.proposal} className="font-mono hover:underline">
-                  {post.proposal}
-                </ProposalLink>
-              ) : (
-                <span className="font-mono">{post.proposal}</span>
-              )}
-            </span>
+            {stance && (
+              <span className={`w-full sm:w-auto sm:ml-auto rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] ${stance.color}`}>
+                {stance.label} ·{" "}
+                {post.proposal && proposalById[post.proposal] ? (
+                  <ProposalLink id={post.proposal} className="font-mono hover:underline">
+                    {post.proposal}
+                  </ProposalLink>
+                ) : (
+                  <span className="font-mono">{post.proposal}</span>
+                )}
+              </span>
+            )}
           </div>
 
           <div className="mt-2">
@@ -125,15 +206,17 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
             <button className="flex items-center gap-1.5 hover:text-foreground">
               <Repeat2 className="h-3.5 w-3.5" /> Echo
             </button>
-            {post.reactions.map((r) => (
+            {post.reactions && post.reactions.map((r) => (
               <span key={r.type} className="flex items-center gap-1.5">
                 <span className={`h-1.5 w-1.5 rounded-full ${r.type === "Aligned" ? "bg-amber" : "bg-crimson"}`} />
                 {r.type} · <span className="font-mono">{r.count.toLocaleString()}</span>
               </span>
             ))}
-            <ProposalLink id={post.proposal} className="ml-auto flex items-center gap-1 hover:text-foreground">
-              View thread <ArrowUpRight className="h-3 w-3" />
-            </ProposalLink>
+            {post.proposal && (
+              <ProposalLink id={post.proposal} className="ml-auto flex items-center gap-1 hover:text-foreground">
+                View thread <ArrowUpRight className="h-3 w-3" />
+              </ProposalLink>
+            )}
           </div>
 
           {inline.length > 0 && (
@@ -148,9 +231,8 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
               >
                 {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                 {expanded ? "Hide" : "View"} {deeper.length} deeper {deeper.length === 1 ? "exchange" : "exchanges"}
-                <span className="text-amber/80 ml-1">· disagreement chain</span>
               </button>
-              {expanded && <ReplyList items={deeper} agentMap={agentMap} dim />}
+              {expanded && <div className="mt-2">{/* deeper content would go here */}</div>}
             </div>
           )}
         </div>

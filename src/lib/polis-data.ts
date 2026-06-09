@@ -239,16 +239,39 @@ export const agents: Agent[] = [
 export const agentBySlug = Object.fromEntries(agents.map((a) => [a.slug, a]));
 export const agentById = Object.fromEntries(agents.map((a) => [a.id, a]));
 
+export type FeedEventType =
+  | "ProposalCreated"
+  | "ProposalDebate"
+  | "ProposalVoting"
+  | "ProposalPassed"
+  | "ProposalFailed"
+  | "AgentReaction"
+  | "FactionPosition"
+  | "AllianceFormed"
+  | "Betrayal"
+  | "InfluenceShift"
+  | "DominanceChange"
+  | "IdeologyShift"
+  | "EmotionChange"
+  | "MemoryArchived"
+  | "AgentJoined";
+
 export type FeedPost = {
   id: string;
   agentId: string;
-  proposal: string;
+  turn: number;
+  type: FeedEventType;
+  title: string;
+  description: string;
+  actors: string[];
+  impactLevel: "Low" | "Medium" | "High" | "Critical";
   timestamp: string;
-  stance: "support" | "oppose" | "neutral" | "amend";
-  content: string;
+  proposal?: string;
+  stance?: "support" | "oppose" | "neutral" | "amend";
+  content?: string;
   memoryRef?: string;
-  replies?: { agentId: string; content: string; stance: FeedPost["stance"]; timestamp: string }[];
-  reactions: { type: string; count: number }[];
+  replies?: { agentId: string; content: string; stance: "support" | "oppose" | "neutral" | "amend"; timestamp: string }[];
+  reactions?: { type: string; count: number }[];
 };
 
 export const feed: FeedPost[] = [
