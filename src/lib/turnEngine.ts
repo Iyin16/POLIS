@@ -787,7 +787,7 @@ function updateFactions(state: TurnState): TurnState {
 
 function evolveAgents(state: TurnState): TurnState {
   const resolvedMap = new Map(state.proposals.filter((proposal) => proposal.statusTag !== "Active" && proposal.lifecycle === "Resolved").map((proposal) => [proposal.id, proposal]));
-  const shifts: { name: string; note: string; magnitude: number }[] = [];
+  const shifts: { name: string; note: string; magnitude: number; ideologyValue: number; traitDelta: number; reputationDelta: number; influenceDelta: number }[] = [];
   const ideologyMetric: Record<string, string> = {
     Reformist: "Collectivism",
     Technocrat: "Authority",
@@ -805,7 +805,7 @@ function evolveAgents(state: TurnState): TurnState {
     const baseIdeology = agent.ideology.split(" — ")[0];
 
     type ResolutionHistory = { entry: Agent["votingHistory"][number]; proposal: Proposal };
-  const relevantResolutions = agent.votingHistory
+    const relevantResolutions = agent.votingHistory
       .map((entry) => ({ entry, proposal: resolvedMap.get(entry.proposal) }))
       .filter((item): item is ResolutionHistory => Boolean(item.proposal));
 
@@ -826,6 +826,11 @@ function evolveAgents(state: TurnState): TurnState {
       else ideologyShift = `${baseIdeology} — challenged by recent outcomes`;
     }
 
+    const trait = agent.traits[0] ?? "political posture";
+    const traitDelta = Math.abs(impactScore) + Math.abs(ideologyDriftValue);
+    const traitPhrase = impactScore >= 2 ? `doubled down on ${trait}` : impactScore <= -2 ? `softened their ${trait}` : `refined their ${trait}`;
+    const traitChangeNote = `${agent.name} ${traitPhrase}`;
+
     const updatedAgent = {
       ...agent,
       ideology: ideologyShift,
@@ -842,15 +847,40 @@ function evolveAgents(state: TurnState): TurnState {
     const delta = reputationDelta !== 0 ? reputationDelta * 1.3 : influenceDelta !== 0 ? influenceDelta * 1.1 : Math.sign(impactScore) * 0.8;
     const line = `${agent.name} ${metric} ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;
 
-    shifts.push({ name: agent.name, note: line, magnitude: Math.abs(delta) });
+    shifts.push({
+      name: agent.name,
+      note: line,
+      magnitude: Math.abs(delta),
+      ideologyValue: Math.abs(ideologyDriftValue),
+      traitDelta,
+      reputationDelta,
+      influenceDelta,
+    });
     return updatedAgent;
   });
 
-  const sortedEvolutions = shifts.sort((a, b) => b.magnitude - a.magnitude).slice(0, 3).map((item) => item.note);
+  const topIdeologyShifts = shifts
+    .slice()
+    .sort((a, b) => b.ideologyValue - a.ideologyValue)
+    .slice(0, 3)
+    .map((item) => `${item.name} ideology shift ${item.note}`);
+  const biggestTrait = shifts.slice().sort((a, b) => b.traitDelta - a.traitDelta)[0];
+  const mostInfluential = agents.slice().sort((a, b) => b.influence - a.influence)[0];
+  const mostDistrusted = agents.slice().sort((a, b) => a.reputation - b.reputation)[0];
+
+  const agentEvolutionDetails: AgentEvolutionDetails = {
+    topIdeologyShifts,
+    biggestTraitChange: biggestTrait?.note ?? "No trait change",
+    mostInfluentialAgent: mostInfluential ? `${mostInfluential.name} (${mostInfluential.faction})` : "None",
+    mostDistrustedAgent: mostDistrusted ? `${mostDistrusted.name} (${mostDistrusted.faction})` : "None",
+  };
+
+  const sortedEvolutions = shifts.slice().sort((a, b) => b.magnitude - a.magnitude).slice(0, 3).map((item) => item.note);
   return {
     ...state,
     agents,
     agentEvolutionSummary: sortedEvolutions,
+    agentEvolutionDetails,
   };
 }
 
@@ -961,6 +991,7 @@ export function createSnapshot(state: TurnState): WorldSnapshot {
     emotionState: state.worldState.emotion,
     summary: generateTurnSummary(state),
     agentEvolutionSummary: state.agentEvolutionSummary,
+    agentEvolutionDetails: state.agentEvolutionDetails,
     activeProposal: activeProposal?.title,
     voteResult: lastResolved ? `${lastResolved.title} ${lastResolved.statusTag}` : "No vote result",
     majorEvent: state.events[0]?.title,
