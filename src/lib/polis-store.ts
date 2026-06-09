@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { createWorldState, type WorldState } from "./world-state";
 import { archiveGovernanceMemory } from "./0g-storage";
+import { generateAgentPortrait } from "./portrait";
 import { getAgentId } from "./agent-id";
 import type { Agent, FeedPost, Memory, Proposal, ProposalCategory } from "./polis-data";
 import { agents as baseAgents, feed as baseFeed, memories as baseMemories, proposals as baseProposals } from "./polis-data";
@@ -215,6 +216,16 @@ export async function createAgentInPolisSimulation(input: {
     recentActivity: [`Founded as a sovereign entity registered with the ${input.faction} bloc.`],
     rank,
   };
+
+  // Generate an AI-style portrait synchronously (deterministic SVG data URI)
+  try {
+    const portrait = await generateAgentPortrait(newAgent as any);
+    newAgent.portraitUri = portrait.uri;
+    newAgent.portraitSeed = portrait.seed;
+    newAgent.portraitStyle = portrait.style;
+  } catch (e) {
+    // if portrait generation fails, continue without blocking agent creation
+  }
 
   const memoryTitle = `Founding of ${input.name}`;
   const memory: Memory = {

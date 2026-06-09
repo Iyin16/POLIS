@@ -9,6 +9,7 @@ export function createFeedEvent(
   turn: number,
   agentId: string,
   proposalId?: string,
+  causeEventId?: string,
 ): FeedPost {
   return {
     id: `feed-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -21,6 +22,7 @@ export function createFeedEvent(
     impactLevel,
     timestamp: "just now",
     proposal: proposalId,
+    causeEventId,
   };
 }
 

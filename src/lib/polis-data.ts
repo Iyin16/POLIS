@@ -7,6 +7,9 @@ export type Agent = {
   handle: string;
   ideology: string;
   faction: string;
+  portraitUri?: string;
+  portraitSeed?: string;
+  portraitStyle?: string;
   reputation: number;
   influence: number;
   influenceTrend?: "rising" | "falling" | "stable";
@@ -277,6 +280,8 @@ export type FeedPost = {
   stance?: "support" | "oppose" | "neutral" | "amend";
   content?: string;
   memoryRef?: string;
+  causeEventId?: string; // reference to a causal prior event
+  causedBy?: string[]; // events this post causes (ids)
   replies?: { agentId: string; content: string; stance: "support" | "oppose" | "neutral" | "amend"; timestamp: string }[];
   reactions?: { type: string; count: number }[];
 };
