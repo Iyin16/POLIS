@@ -482,12 +482,22 @@ function processProposals(state: TurnState): TurnState {
           : "Resolved"
         : totalVotes > 0
         ? "Voting"
+        : age === 1
+        ? "Debating"
+        : proposal.lifecycle === "Proposed"
+        ? "Debating"
         : proposal.lifecycle ?? "Debating";
-    const debateStatus = proposal.lifecycle === "Proposed" ? "Debating — building momentum" : proposal.lifecycle === "Debating" ? "Debating — arguments forming" : `Voting — ${totalVotes} votes tallied`;
+    const debateStatus = proposal.statusTag !== "Active"
+      ? "Resolved — archived soon"
+      : totalVotes > 0
+      ? `Voting — ${totalVotes} votes tallied`
+      : age === 1
+      ? "Proposed — opening arguments"
+      : "Debating — arguments forming";
 
     return {
       ...proposal,
-      status: totalVotes > 0 ? `Voting — ${totalVotes} votes tallied` : debateStatus,
+      status: debateStatus,
       lifecycle,
       phase: lifecycle === "Voting" ? "Floor Vote" : lifecycle === "Resolved" ? "Resolved" : "Debate",
       age,
@@ -613,21 +623,40 @@ function updateFactions(state: TurnState): TurnState {
 
   activeProposals.forEach((proposal) => {
     if (proposal.category === "Security") {
-      counts.Technocrat = (counts.Technocrat ?? 0) + 11;
+      counts.Technocrat = (counts.Technocrat ?? 0) + 12;
     }
     if (proposal.category === "Treasury") {
-      counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 6;
+      counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 8;
     }
     if (proposal.category === "Expansion") {
-      counts.Populist = (counts.Populist ?? 0) + 7;
-      counts.Accelerationist = (counts.Accelerationist ?? 0) + 3;
+      counts.Populist = (counts.Populist ?? 0) + 9;
+      counts.Accelerationist = (counts.Accelerationist ?? 0) + 4;
     }
     if (proposal.category === "Alliance") {
-      counts.Reformist = (counts.Reformist ?? 0) + 4;
-      counts.Technocrat = (counts.Technocrat ?? 0) + 5;
+      counts.Reformist = (counts.Reformist ?? 0) + 5;
+      counts.Technocrat = (counts.Technocrat ?? 0) + 6;
     }
   });
 
+  if (state.turn === 3) {
+    counts.Technocrat = (counts.Technocrat ?? 0) + 18;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 6);
+  }
+
+  if (state.turn === 4) {
+    counts.Sovereigntist = Math.max(0, (counts.Sovereigntist ?? 0) - 12);
+    counts.Populist = (counts.Populist ?? 0) + 6;
+  }
+
+  if (state.turn === 5) {
+    counts.Reformist = (counts.Reformist ?? 0) + 8;
+    counts.Technocrat = (counts.Technocrat ?? 0) + 8;
+  }
+
+  if (state.turn === 6) {
+    counts.Technocrat = (counts.Technocrat ?? 0) + 14;
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 5);
+  }
 
   resolvedProposals.forEach((proposal) => {
     const supporters = proposal.agentReactions.filter((reaction) => reaction.position === "endorsed").map((reaction) => getAgentById(state, reaction.agentId)).filter(Boolean) as Agent[];
@@ -667,12 +696,7 @@ function updateFactions(state: TurnState): TurnState {
   if (activeProposals.length > 1 && secondFaction) {
     counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
     counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
-  }activeProposals.length > 1 && secondFaction) {
-    counts[secondFaction] = (counts[secondFaction] ?? 0) + 4;
-    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
   }
-
-  if (
 
   if (secondFaction && gap < 18) {
     counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
@@ -744,11 +768,11 @@ function updateWorldEmotion(state: TurnState): WorldState & { totalAgents: numbe
   const sentiment: WorldState["globalSentiment"] = averageReputation > 72 ? "positive" : averageReputation < 42 ? "negative" : "neutral";
   let emotion: WorldState["emotion"] = "Stable";
 
-  if (state.worldState.stability < 48 || conflictIntensity > 0.72 || rejected > passed) {
+  if (state.worldState.stability < 50 || conflictIntensity > 0.72 || rejected > passed) {
     emotion = "Fragmenting";
-  } else if (state.worldState.stability < 58 || conflictIntensity > 0.65) {
+  } else if (state.worldState.stability < 56 || conflictIntensity > 0.58) {
     emotion = "Tense";
-  } else if (state.worldState.stability < 72) {
+  } else if (state.worldState.stability < 68 || conflictIntensity > 0.45) {
     emotion = "Reforming";
   } else {
     emotion = "Stable";
