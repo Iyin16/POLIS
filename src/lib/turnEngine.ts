@@ -608,7 +608,28 @@ function updateFactions(state: TurnState): TurnState {
     return acc;
   }, {});
 
-  state.proposals.forEach((proposal) => {
+  const activeProposals = state.proposals.filter((proposal) => proposal.statusTag === "Active");
+  const resolvedProposals = state.proposals.filter((proposal) => proposal.statusTag !== "Active");
+
+  activeProposals.forEach((proposal) => {
+    if (proposal.category === "Security") {
+      counts.Technocrat = (counts.Technocrat ?? 0) + 11;
+    }
+    if (proposal.category === "Treasury") {
+      counts.Sovereigntist = (counts.Sovereigntist ?? 0) + 6;
+    }
+    if (proposal.category === "Expansion") {
+      counts.Populist = (counts.Populist ?? 0) + 7;
+      counts.Accelerationist = (counts.Accelerationist ?? 0) + 3;
+    }
+    if (proposal.category === "Alliance") {
+      counts.Reformist = (counts.Reformist ?? 0) + 4;
+      counts.Technocrat = (counts.Technocrat ?? 0) + 5;
+    }
+  });
+
+
+  resolvedProposals.forEach((proposal) => {
     const supporters = proposal.agentReactions.filter((reaction) => reaction.position === "endorsed").map((reaction) => getAgentById(state, reaction.agentId)).filter(Boolean) as Agent[];
     const opponents = proposal.agentReactions.filter((reaction) => reaction.position === "opposed").map((reaction) => getAgentById(state, reaction.agentId)).filter(Boolean) as Agent[];
 
@@ -617,7 +638,7 @@ function updateFactions(state: TurnState): TurnState {
         counts[agent.faction] = (counts[agent.faction] ?? 0) + 6;
       });
       opponents.forEach((agent) => {
-        counts[agent.faction] = Math.max(0, (counts[agent.faction] ?? 0) - 3);
+        counts[agent.faction] = Math.max(0, (counts[agent.faction] ?? 0) - 4);
       });
     }
 
@@ -626,38 +647,40 @@ function updateFactions(state: TurnState): TurnState {
         counts[agent.faction] = (counts[agent.faction] ?? 0) + 5;
       });
       supporters.forEach((agent) => {
-        counts[agent.faction] = Math.max(0, (counts[agent.faction] ?? 0) - 2);
+        counts[agent.faction] = Math.max(0, (counts[agent.faction] ?? 0) - 3);
       });
     }
 
     if (proposal.statusTag === "Tabled") {
       const combinedFactions = new Set([...supporters, ...opponents].map((agent) => agent.faction));
       combinedFactions.forEach((faction) => {
-        counts[faction] = (counts[faction] ?? 0) + 2;
+        counts[faction] = (counts[faction] ?? 0) + 4;
       });
-    }
-
-    if (proposal.category === "Security") {
-      counts.Technocrat = (counts.Technocrat ?? 0) + 2;
-    }
-    if (proposal.category === "Alliance") {
-      counts.Reformist = (counts.Reformist ?? 0) + 1;
-      counts.Accelerationist = (counts.Accelerationist ?? 0) + 1;
-    }
-    if (proposal.category === "Expansion") {
-      counts.Populist = (counts.Populist ?? 0) + 1;
     }
   });
 
   const sortedFactions = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const dominantFaction = sortedFactions[0]?.[0] ?? null;
+  const secondFaction = sortedFactions[1]?.[0];
+  const gap = sortedFactions.length > 1 ? sortedFactions[0][1] - sortedFactions[1][1] : 0;
 
-  if (sortedFactions.length > 1) {
-    const gap = sortedFactions[0][1] - sortedFactions[1][1];
-    if (gap < 12) {
-      counts[sortedFactions[1][0]] = (counts[sortedFactions[1][0]] ?? 0) + 3;
-      counts[sortedFactions[0][0]] = Math.max(0, counts[sortedFactions[0][0]] - 1);
-    }
+  if (activeProposals.length > 1 && secondFaction) {
+    counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
+    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
+  }activeProposals.length > 1 && secondFaction) {
+    counts[secondFaction] = (counts[secondFaction] ?? 0) + 4;
+    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
+  }
+
+  if (
+
+  if (secondFaction && gap < 18) {
+    counts[secondFaction] = (counts[secondFaction] ?? 0) + 5;
+    counts[dominantFaction] = Math.max(0, (counts[dominantFaction] ?? 0) - 2);
+  }
+
+  if (dominantFaction === "Reformist" && gap > 24) {
+    counts.Reformist = Math.max(0, (counts.Reformist ?? 0) - 3);
   }
 
   return {
@@ -671,31 +694,36 @@ function updateFactions(state: TurnState): TurnState {
 }
 
 function evolveAgents(state: TurnState): TurnState {
-  const evolutions: { name: string; note: string; magnitude: number }[] = [];
+  const shifts: { name: string; note: string; magnitude: number }[] = [];
+  const ideologyMetric: Record<string, string> = {
+    Reformist: "Collectivism",
+    Technocrat: "Authority",
+    Sovereigntist: "Faction trust",
+    Populist: "Voice",
+    Accelerationist: "Momentum",
+  };
 
   const agents = state.agents.map((agent) => {
-    const voteCount = agent.votingHistory.length;
-    const reputationDelta = voteCount >= 2 ? 1 : voteCount === 1 ? 0 : -1;
-    const influenceDelta = voteCount >= 3 ? 2 : voteCount === 2 ? 1 : voteCount === 1 ? 0 : -1;
-    const trustDelta = Math.round(reputationDelta * 3 - (agent.rivals.length * 0.5));
-
+    const supported = agent.votingHistory.filter((entry) => entry.position === "endorsed").length;
+    const opposed = agent.votingHistory.filter((entry) => entry.position === "opposed").length;
+    const impactScore = supported - opposed;
+    const reputationDelta = impactScore >= 2 ? 1 : impactScore <= -2 ? -1 : 0;
+    const influenceDelta = impactScore >= 3 ? 2 : impactScore === 2 ? 1 : impactScore === -1 ? -1 : impactScore <= -2 ? -2 : 0;
     const updatedAgent = {
       ...agent,
       reputation: Math.min(100, Math.max(0, agent.reputation + reputationDelta)),
       influence: Math.min(100, Math.max(0, agent.influence + influenceDelta)),
       recentActivity: [`Evolved: ${reputationDelta >= 0 ? "gained" : "lost"} ${Math.abs(reputationDelta)} reputation, ${influenceDelta >= 0 ? "gained" : "lost"} ${Math.abs(influenceDelta)} influence.`, ...agent.recentActivity].slice(0, 4),
     };
+    const metric = ideologyMetric[agent.faction] ?? "Trust";
+    const delta = reputationDelta !== 0 ? reputationDelta * 1.3 : influenceDelta !== 0 ? influenceDelta * 1.1 : Math.sign(impactScore) * 0.8;
+    const line = `${agent.name} ${metric} ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`;
 
-    const metric = reputationDelta !== 0 ? "Authority" : influenceDelta !== 0 ? "Influence" : "Faction trust";
-    const delta = metric === "Authority" ? reputationDelta : metric === "Influence" ? influenceDelta : trustDelta;
-    if (delta !== 0) {
-      evolutions.push({ name: agent.name, note: `${agent.name} ${metric} ${delta > 0 ? "+" : ""}${delta.toFixed(1)}`, magnitude: Math.abs(delta) });
-    }
-
+    shifts.push({ name: agent.name, note: line, magnitude: Math.abs(delta) });
     return updatedAgent;
   });
 
-  const sortedEvolutions = evolutions.sort((a, b) => b.magnitude - a.magnitude).slice(0, 3).map((item) => item.note);
+  const sortedEvolutions = shifts.sort((a, b) => b.magnitude - a.magnitude).slice(0, 3).map((item) => item.note);
   return {
     ...state,
     agents,
@@ -716,9 +744,9 @@ function updateWorldEmotion(state: TurnState): WorldState & { totalAgents: numbe
   const sentiment: WorldState["globalSentiment"] = averageReputation > 72 ? "positive" : averageReputation < 42 ? "negative" : "neutral";
   let emotion: WorldState["emotion"] = "Stable";
 
-  if (state.worldState.stability < 48 || conflictIntensity > 0.65 || rejected > passed) {
+  if (state.worldState.stability < 48 || conflictIntensity > 0.72 || rejected > passed) {
     emotion = "Fragmenting";
-  } else if (state.worldState.stability < 55 || conflictIntensity > 0.45) {
+  } else if (state.worldState.stability < 58 || conflictIntensity > 0.65) {
     emotion = "Tense";
   } else if (state.worldState.stability < 72) {
     emotion = "Reforming";
