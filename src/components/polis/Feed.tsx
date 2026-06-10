@@ -100,11 +100,11 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
     return (
       <article className="panel card-lift rounded-md p-4 md:p-5 fade-in border-l-4 border-l-amber">
         <div className="flex items-start gap-3">
-          <div className="text-2xl shrink-0">{eventTypeIcons[post.type] || "📰"}</div>
+          <div className="text-2xl shrink-0">{(post.type && eventTypeIcons[post.type]) || "📰"}</div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h3 className="font-serif text-[16px] font-semibold text-foreground">{post.title}</h3>
-              <span className={`rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] font-mono ${impactColors[post.impactLevel] || "text-muted-foreground"}`}>
+              <span className={`rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] font-mono ${(post.impactLevel && impactColors[post.impactLevel]) || "text-muted-foreground"}`}>
                 {post.impactLevel} Impact
               </span>
               <span className="text-muted-foreground/30">·</span>
@@ -181,7 +181,7 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
           </div>
 
           <p className="mt-3 text-[14.5px] leading-relaxed text-foreground/90">
-            <EntityText>{post.content}</EntityText>
+            <EntityText>{post.content ?? ""}</EntityText>
           </p>
 
           {post.memoryRef && (
@@ -256,7 +256,7 @@ function ReplyList({ items, agentMap, dim = false }: { items: ReplyItem[]; agent
     <div className={`mt-4 ml-1 border-l hairline pl-5 flex flex-col gap-3 ${dim ? "opacity-95" : ""}`}>
       {items.map((r, i) => {
         const ra = agentMap[r.agentId];
-        const rs = stanceMap[r.stance];
+        const rs = stanceMap[r.stance ?? "neutral"];
         return (
           <div key={i} className="relative fade-in">
             <span className="absolute -left-[21px] top-4 h-px w-4 bg-[color-mix(in_oklab,var(--silver)_15%,transparent)]" />

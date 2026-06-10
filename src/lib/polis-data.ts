@@ -269,12 +269,12 @@ export type FeedEventType =
 export type FeedPost = {
   id: string;
   agentId: string;
-  turn: number;
-  type: FeedEventType;
-  title: string;
-  description: string;
-  actors: string[];
-  impactLevel: "Low" | "Medium" | "High" | "Critical";
+  turn?: number;
+  type?: FeedEventType;
+  title?: string;
+  description?: string;
+  actors?: string[];
+  impactLevel?: "Low" | "Medium" | "High" | "Critical";
   timestamp: string;
   proposal?: string;
   stance?: "support" | "oppose" | "neutral" | "amend";

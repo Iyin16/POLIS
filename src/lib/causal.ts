@@ -11,7 +11,7 @@ export function buildCausalChain(feed: FeedPost[], startEventId: string, depth =
   let currentId: string | undefined = startEventId;
   let i = 0;
   while (currentId && i < depth) {
-    const ev = map[currentId];
+    const ev: FeedPost | undefined = map[currentId];
     if (!ev) break;
     chain.push(ev);
     currentId = ev.causeEventId ?? undefined;
