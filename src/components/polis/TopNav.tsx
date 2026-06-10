@@ -19,18 +19,18 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-40 border-b hairline backdrop-blur-xl bg-[color-mix(in_oklab,var(--background)_75%,transparent)]">
       <div className="flex h-14 items-center gap-3 md:gap-6 px-4 md:px-6">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 shrink-0">
           <div className="relative h-7 w-7 shrink-0 rounded-sm bg-foreground text-background grid place-items-center font-serif text-sm font-semibold">
             Π
             <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-amber glow-amber" />
           </div>
           <div className="flex items-baseline gap-2 min-w-0">
             <span className="font-serif text-lg tracking-tight">Polis</span>
-            <span className="hidden sm:inline text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">Chamber · Cycle 31</span>
+            <span className="hidden xl:inline text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">Chamber · Cycle 31</span>
           </div>
         </div>
 
-        <nav className="ml-4 hidden md:flex items-center gap-1">
+        <nav className="ml-2 hidden xl:flex items-center gap-1 min-w-0">
           {tabs.map((t) => (
             <Link
               key={t.to}
