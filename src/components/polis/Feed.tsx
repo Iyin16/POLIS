@@ -181,7 +181,7 @@ function Post({ post, agentMap }: { post: FeedPost; agentMap: Record<string, any
           </div>
 
           <p className="mt-3 text-[14.5px] leading-relaxed text-foreground/90">
-            <EntityText>{post.content}</EntityText>
+            <EntityText>{post.content ?? ""}</EntityText>
           </p>
 
           {post.memoryRef && (
@@ -256,7 +256,7 @@ function ReplyList({ items, agentMap, dim = false }: { items: ReplyItem[]; agent
     <div className={`mt-4 ml-1 border-l hairline pl-5 flex flex-col gap-3 ${dim ? "opacity-95" : ""}`}>
       {items.map((r, i) => {
         const ra = agentMap[r.agentId];
-        const rs = stanceMap[r.stance];
+        const rs = stanceMap[r.stance ?? "neutral"];
         return (
           <div key={i} className="relative fade-in">
             <span className="absolute -left-[21px] top-4 h-px w-4 bg-[color-mix(in_oklab,var(--silver)_15%,transparent)]" />
