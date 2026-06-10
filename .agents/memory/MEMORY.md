@@ -1,0 +1,2 @@
+- [0g-storage blocked](0g-storage.md) — @0gfoundation/0g-storage-ts-sdk permanently blocked by Replit firewall (es5-ext dependency). src/lib/0g-storage.ts is a graceful stub.
+- [Polis consequence + era system](consequence-era-arch.md) — cascading consequence engine + civilization era system fully integrated into turnEngine.ts; EraPanel.tsx reads from usePolisStore().worldState.

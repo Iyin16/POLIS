@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { createWorldState, type WorldState } from "./world-state";
+import { determineEra } from "./era-system";
 import { archiveGovernanceMemory } from "./0g-storage";
 import { generateAgentPortrait } from "./portrait";
 import { getAgentId } from "./agent-id";
@@ -127,6 +128,16 @@ function persistState(state: PolisState) {
         worldState: {
           totalAgents: state.worldState.totalAgents,
           dominantFaction: state.worldState.dominantFaction,
+          civilizationEra: (state.worldState as any).civilizationEra,
+          currentEra: (state.worldState as any).currentEra,
+          eraStartTurn: (state.worldState as any).eraStartTurn,
+          eraHistory: (state.worldState as any).eraHistory,
+          politicalTension: (state.worldState as any).politicalTension,
+          factionStreaks: (state.worldState as any).factionStreaks,
+          factionMorale: (state.worldState as any).factionMorale,
+          factionGrievances: (state.worldState as any).factionGrievances,
+          allianceTrust: (state.worldState as any).allianceTrust,
+          betrayalCounts: (state.worldState as any).betrayalCounts,
         },
       }),
     );
@@ -273,15 +284,29 @@ export async function createAgentInPolisSimulation(input: {
     replies: [],
   };
 
+  const nextWorldState = {
+    ...state.worldState,
+    totalAgents: state.agents.length + 1,
+  };
+  const computedEra = determineEra(nextWorldState as any);
+  const ERA_LABEL_MAP: Record<string, string> = {
+    Formation: "Formation Era",
+    Expansion: "Expansion Era",
+    Reform: "Reform Era",
+    Crisis: "Crisis Era",
+    Consolidation: "Consolidation Era",
+  };
+
   const nextState: PolisState = {
     agents: [...state.agents, newAgent],
     feed: [feedPost, ...state.feed],
     memories: [memory, ...state.memories],
     proposals: [...state.proposals],
     worldState: {
-      ...state.worldState,
-      totalAgents: state.agents.length + 1,
-    },
+      ...nextWorldState,
+      civilizationEra: computedEra,
+      currentEra: ERA_LABEL_MAP[computedEra] ?? `${computedEra} Era`,
+    } as any,
   };
 
   state = nextState;

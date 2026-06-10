@@ -1,7 +1,8 @@
-import { agents, factionInfluence, factionTrends, chamberSignals, eras } from "@/lib/polis-data";
+import { agents, factionInfluence, factionTrends, chamberSignals } from "@/lib/polis-data";
+import { EraPanel } from "./EraPanel";
 import { AgentAvatar } from "./AgentAvatar";
 import { driftedValue, useTick, rotatingIndex } from "@/lib/use-live-pulse";
-import { Activity, Crown, Flame, Radio, ShieldAlert, Sparkles } from "lucide-react";
+import { Activity, Crown, Flame, Radio, ShieldAlert } from "lucide-react";
 
 export function Dominance() {
   const t = useTick();
@@ -27,8 +28,6 @@ export function Dominance() {
     }))
     .sort((x, y) => y.power - x.power)
     .slice(0, 8);
-
-  const currentEra = eras[eras.length - 1];
 
   const events = [
     { time: "00:42", level: "alert", text: chamberSignals[2] },
@@ -107,26 +106,8 @@ export function Dominance() {
           </div>
         </div>
 
-        <div className="panel rounded-md p-5 lg:col-span-5">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-cyan" /> Current Era
-          </div>
-          <h2 className="font-serif text-2xl md:text-3xl tracking-tight mt-3 text-cyan">{currentEra.name}</h2>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-1">
-            {currentEra.cycles} · {currentEra.years}
-          </p>
-          <p className="font-serif text-[12px] italic text-foreground/80 mt-3">
-            Doctrine — {currentEra.doctrine}
-          </p>
-          <p className="text-[12.5px] text-muted-foreground mt-3 leading-relaxed">{currentEra.summary}</p>
-          <ul className="mt-3 space-y-1 text-[11.5px]">
-            {currentEra.defining.map((d) => (
-              <li key={d} className="flex gap-2">
-                <span className="text-amber">▸</span>
-                <span className="text-foreground/85">{d}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="lg:col-span-5">
+          <EraPanel />
         </div>
 
         {/* Meters */}

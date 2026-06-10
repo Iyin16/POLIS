@@ -264,7 +264,15 @@ export type FeedEventType =
   | "MemoryArchived"
   | "TurnSummary"
   | "AgentJoined"
-  | "AgentMinted";
+  | "AgentMinted"
+  | "FactionMorale"
+  | "DominantDissent"
+  | "RivalUnity"
+  | "CloseVoteTension"
+  | "AllianceTrust"
+  | "BetrayalPenalty"
+  | "EraTransition"
+  | "ConsequenceTriggered";
 
 export type FeedPost = {
   id: string;

@@ -17,6 +17,9 @@ import {
   createFeedEvent,
 } from "./feed-events";
 import { generateAgentPortrait } from "./portrait";
+import { applyConsequenceEngine, getFactionMorale, getAllianceTrustBonus, getTensionModifier } from "./consequence-engine";
+import { updateCivilizationEra, getEraVoteWeightModifier, getEraProposalBias, getEraIdeologyDriftMultiplier } from "./era-system";
+import type { CivilizationEra } from "./world-state";
 
 const proposalCategories: ProposalCategory[] = ["Treasury", "Governance Reform", "Security", "Alliance", "Expansion"];
 
@@ -100,6 +103,19 @@ function getProposalCategoryForTurn(turn: number): ProposalCategory {
   return proposalCategories[(turn - 1) % proposalCategories.length];
 }
 
+function getEraWeightedCategory(worldState: any, turn: number): ProposalCategory {
+  const era: CivilizationEra = worldState?.civilizationEra ?? "Formation";
+  const bias = getEraProposalBias(era);
+  const weights = proposalCategories.map((c) => bias[c] ?? 1.0);
+  const total = weights.reduce((s, w) => s + w, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < proposalCategories.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return proposalCategories[i];
+  }
+  return getProposalCategoryForTurn(turn);
+}
+
 function buildProposalTitle(category: ProposalCategory, turn: number) {
   return `${category} Initiative ${String(turn).padStart(2, "0")}`;
 }
@@ -134,6 +150,21 @@ function getVotePosition(preference: string) {
   if (preference === "support") return "endorsed";
   if (preference === "oppose") return "opposed";
   return "abstained";
+}
+
+function applyMoraleToPreference(preference: string, agent: Agent, worldState?: any): string {
+  if (!worldState) return preference;
+  const morale = getFactionMorale(worldState, agent.faction);
+  // Demoralized factions (morale < 40) have increased abstention
+  if (preference === "support" && morale < 40 && Math.random() > (morale / 100) * 1.8) {
+    return "abstain";
+  }
+  // Repeated betrayals increase defection chance
+  const betrayals = (worldState.betrayalCounts ?? {})[agent.faction] ?? 0;
+  if (betrayals >= 2 && Math.random() < 0.12) {
+    return preference === "support" ? "oppose" : preference === "oppose" ? "support" : preference;
+  }
+  return preference;
 }
 
 function shouldSpawnProposal(state: TurnState) {
@@ -247,7 +278,7 @@ function archiveResolvedProposals(state: TurnState): TurnState {
 function maybeGenerateProposal(state: TurnState): TurnState {
   if (!shouldSpawnProposal(state)) return state;
 
-  const category = getProposalCategoryForTurn(state.turn);
+  const category = getEraWeightedCategory(state.worldState, state.turn);
   const proposal = createEngineProposal(state, category);
   const event = {
     id: `event-${Date.now()}`,
@@ -278,7 +309,11 @@ function simulateProposalVoting(state: TurnState): TurnState {
     const voters = undecidedAgents.sort(() => Math.random() - 0.5).slice(0, Math.ceil(undecidedAgents.length * 0.55));
 
     voters.forEach((agent) => {
-      const preference = getAgentVotePreference(agent, proposal.category);
+      const preference = applyMoraleToPreference(
+        getAgentVotePreference(agent, proposal.category),
+        agent,
+        state.worldState,
+      );
       const position = getVotePosition(preference);
       const voteNote = `${agent.name} ${position === "endorsed" ? "supports" : position === "opposed" ? "opposes" : "abstains from"} ${proposal.id}.`;
 
@@ -340,12 +375,14 @@ export async function runTurn(state: TurnState, playerAction?: PlayerAction) {
   newState = processAgentBehavior(newState);
   newState = simulateProposalVoting(newState);
   newState = resolveVotes(newState);
+  newState = applyConsequenceEngine(newState);
   newState = applyWorldChanges(newState);
   newState = updateFactions(newState);
   // Apply influence engine after factions update so dominance is current
   newState = applyInfluenceEngine(newState, priorFactionInfluence);
   newState = evolveAgents(newState);
   newState.worldState = updateWorldEmotion(newState);
+  newState = updateCivilizationEra(newState);
   // Emit world emotion change event if emotion changed
   try {
     const newEmotion = newState.worldState?.emotion;
@@ -942,6 +979,21 @@ function computeVoteWeight(agent: Agent, proposalCategory?: ProposalCategory, st
   const consistencyFactor = 1 + Math.min(0.18, recentVotes * 0.03);
 
   const weight = base * alignmentMultiplier * reputationFactor * consistencyFactor;
+
+  if (state) {
+    const tensionMod = getTensionModifier(state.worldState);
+    const eraMod = getEraVoteWeightModifier(
+      ((state.worldState as any).civilizationEra ?? "Formation") as CivilizationEra,
+      (state.worldState as any).politicalTension ?? 20,
+    );
+    let allianceBonus = 1.0;
+    for (const coalition of agent.coalitions) {
+      allianceBonus += getAllianceTrustBonus(state.worldState, coalition);
+    }
+    allianceBonus = Math.min(1.3, allianceBonus);
+    return Math.max(1, Math.round(weight * tensionMod * eraMod * allianceBonus));
+  }
+
   return Math.max(1, Math.round(weight));
 }
 
